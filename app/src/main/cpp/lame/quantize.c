@@ -38,7 +38,7 @@
 #include "vbrquantize.h"
 #include "quantize.h"
 #ifdef HAVE_XMMINTRIN_H
-#include "vector/lame_intrin.h"
+//#include "vector/lame_intrin.h"
 #endif
 
 
