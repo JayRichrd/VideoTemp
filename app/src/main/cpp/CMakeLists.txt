@@ -16,26 +16,26 @@ add_library( # Sets the name of the library.
              SHARED
              # Provides a relative path to your source file(s).
              native-lib.cpp
-             src/main/cpp/lame/bitstream.c
-             src/main/cpp/lame/encoder.c
-             src/main/cpp/lame/fft.c
-             src/main/cpp/lame/gain_analysis.c
-             src/main/cpp/lame/id3tag.c
-             src/main/cpp/lame/lame.c
-             src/main/cpp/lame/mpglib_interface.c
-             src/main/cpp/lame/newmdct.c
-             src/main/cpp/lame/presets.c
-             src/main/cpp/lame/psymodel.c
-             src/main/cpp/lame/quantize_pvt.c
-             src/main/cpp/lame/quantize.c
-             src/main/cpp/lame/reservoir.c
-             src/main/cpp/lame/set_get.c
-             src/main/cpp/lame/tables.c
-             src/main/cpp/lame/takehiro.c
-             src/main/cpp/lame/util.c
-             src/main/cpp/lame/vbrquantize.c
-             src/main/cpp/lame/VbrTag.c
-             src/main/cpp/lame/version.c)
+             lame/bitstream.c
+             lame/encoder.c
+             lame/fft.c
+             lame/gain_analysis.c
+             lame/id3tag.c
+             lame/lame.c
+             lame/mpglib_interface.c
+             lame/newmdct.c
+             lame/presets.c
+             lame/psymodel.c
+             lame/quantize_pvt.c
+             lame/quantize.c
+             lame/reservoir.c
+             lame/set_get.c
+             lame/tables.c
+             lame/takehiro.c
+             lame/util.c
+             lame/vbrquantize.c
+             lame/VbrTag.c
+             lame/version.c)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
