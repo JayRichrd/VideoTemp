@@ -35,8 +35,7 @@ add_library( # Sets the name of the library.
              lame/util.c
              lame/vbrquantize.c
              lame/VbrTag.c
-             lame/version.c
-             lame/vector/xmm_quantize_sub.c)
+             lame/version.c)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
