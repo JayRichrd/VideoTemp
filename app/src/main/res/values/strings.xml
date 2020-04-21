@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">VideoTemp</string>
+    <string name="pcm2mp3"><![CDATA[pcm->mp3]]></string>
 </resources>
