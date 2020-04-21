@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
 
         /**
-         * 转换前，想将assets目录下的文件拷贝到sd卡中的/videotest/目录下
+         * 转换前，先将assets目录下的文件拷贝到sd卡中的/videotest/目录下
          */
         val pcmPath = Environment.getExternalStorageDirectory().absolutePath + DATA_DIR + PCM_FILE
         val pcmFile = File(pcmPath)
