@@ -3,7 +3,6 @@
 //
 #include <stdio.h>
 #include "../lame/lame.h"
-#include "../../../../../../../../SDK/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/sysroot/usr/include/c++/v1/cstdio"
 
 #ifndef VIDEOTEMP_MP3_ENCODE_H
 #define VIDEOTEMP_MP3_ENCODE_H
