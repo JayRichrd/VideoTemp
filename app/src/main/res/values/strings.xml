@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">VideoTemp</string>
     <string name="pcm2mp3"><![CDATA[pcm->mp3]]></string>
+    <string name="transform_finish">转换完成</string>
 </resources>

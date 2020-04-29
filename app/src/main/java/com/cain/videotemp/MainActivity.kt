@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -100,6 +101,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 Log.i(TAG, "pcm2mp3# init success and begin to encode data.")
                 mp3Encoder.encode()
                 mp3Encoder.destroy()
+                Toast.makeText(this, resources.getString(R.string.transform_finish), Toast.LENGTH_SHORT).show()
             } else {
                 Log.e(TAG, "pcm2mpp3# encode error.")
             }
