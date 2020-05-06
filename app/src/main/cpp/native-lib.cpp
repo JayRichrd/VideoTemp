@@ -47,7 +47,8 @@ Java_com_cain_videotemp_audio_Mp3Encoder_initEcoder(JNIEnv *env, jobject thiz, j
     env->ReleaseStringUTFChars(pcmPath, pcm_path);
     env->ReleaseStringUTFChars(mp3Path, mp3_path);
     return ret;
-} extern "C"
+}
+extern "C"
 JNIEXPORT void JNICALL
 Java_com_cain_videotemp_video_FFVideoPlayer_render(JNIEnv *env, jobject thiz, jstring play_url, jobject surface) {
     const char *url = env->GetStringUTFChars(play_url, 0);
