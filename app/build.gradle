@@ -17,9 +17,12 @@ android {
 
         externalNativeBuild {
             cmake {
-                cppFlags "-frtti -fexceptions"
+                cppFlags "-frtti -fexceptions -Wno-deprecated-declarations"
                 cFlags "-DSTDC_HEADERS"
             }
+        }
+        ndk { // 声明编译的架构类型，指定为armeabi-v7a即可
+            abiFilters "armeabi-v7a"
         }
     }
 
@@ -32,10 +35,20 @@ android {
 
     externalNativeBuild {
         cmake {
-            path "src/main/cpp/CMakeLists.txt"
+            path file('CMakeLists.txt')
             version "3.10.2"
         }
     }
+
+    sourceSets {
+        main {
+            // 指定存放native代码的目录，这里指定为jni和cpp皆可
+            jni.srcDirs = ['src/main/jni', 'src/main/cpp/']
+            // 指定jni库的存放目录为libs
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
 }
 
 dependencies {

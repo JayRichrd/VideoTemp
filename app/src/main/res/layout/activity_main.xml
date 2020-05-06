@@ -2,6 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:scrollbars="vertical">
 
     <LinearLayout
@@ -15,6 +16,19 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/pcm2mp3" />
+
+        <Button
+            android:id="@+id/btn_ffmpeg_play"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/ffmpeg_play" />
+
+        <com.cain.videotemp.video.FFVideoPlayer
+            android:id="@+id/ffplay"
+            app:play_url="http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4"
+            android:layout_width="match_parent"
+            android:layout_height="220dp" />
     </LinearLayout>
 
 </ScrollView>

@@ -28,9 +28,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         const val AUDIO_CHANEL = AudioFormat.CHANNEL_IN_MONO
         const val INIT_OK = 1
         const val INIT_ERROR = 0
+
+
         val PERMISSIONS_STORAGE = arrayOf(
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+        val PERMISSIONS_INTERNET = arrayOf(
+            Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_WIFI_STATE
         )
 
         // Used to load the 'native-lib' library on application startup.
@@ -39,15 +45,17 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    val mp3Encoder by lazy { Mp3Encoder() }
+    private val mp3Encoder by lazy { Mp3Encoder() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         btn_pcm_2_mp3.setOnClickListener(this)
+        btn_ffmpeg_play.setOnClickListener(this)
         // Android 6以上动态权限申请
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            checkNecessaryPermission(PERMISSIONS_STORAGE)
+            requestNecessaryPermission(PERMISSIONS_STORAGE)
+            requestNecessaryPermission(PERMISSIONS_INTERNET)
         }
     }
 
@@ -56,10 +64,22 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             R.id.btn_pcm_2_mp3 -> {
                 pcm2mp3()
             }
+            R.id.btn_ffmpeg_play -> {
+                ffmpegPlay()
+            }
             else -> {
                 Log.w(TAG, "onClick# nothing to do.")
             }
         }
+    }
+
+    private fun ffmpegPlay() {
+        Log.i(TAG, "ffmpegPlay###")
+        if (!checkNecessaryPermission(PERMISSIONS_STORAGE)) {
+            Log.e(TAG, "ffmpegPlay# there is no permission.")
+            return
+        }
+        ffplay.play()
     }
 
     /**
@@ -76,11 +96,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun pcm2mp3() {
-        PERMISSIONS_STORAGE.forEach { permission ->
-            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                Log.e(TAG, "pcm2mp3# there is no permission.")
-                return
-            }
+        if (!checkNecessaryPermission(PERMISSIONS_STORAGE)) {
+            Log.e(TAG, "pcm2mp3# there is no permission.")
+            return
         }
 
         /**
@@ -108,7 +126,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private fun checkNecessaryPermission(permissions: Array<String>) {
+    private fun requestNecessaryPermission(permissions: Array<String>) {
         val permissionList = arrayListOf<String>()
         permissions.forEach { permission ->
             if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
@@ -118,6 +136,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         if (permissionList.isNotEmpty()) {
             ActivityCompat.requestPermissions(this, permissionList.toTypedArray(), PERMISSION_REQUEST_FROM_MAIN)
         }
+    }
+
+    private fun checkNecessaryPermission(permissions: Array<String>): Boolean {
+        permissions.forEach { permission ->
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                Log.e(TAG, "pcm2mp3# there is no permission.")
+                return false
+            }
+        }
+        return true
     }
 
     /**
