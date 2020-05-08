@@ -18,6 +18,8 @@ import androidx.core.content.ContextCompat
 import com.cain.videotemp.audio.Mp3Encoder
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
@@ -36,14 +38,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         const val INIT_ERROR = 0
 
 
-        val PERMISSIONS_STORAGE = arrayOf(
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-        )
-        val PERMISSIONS_INTERNET = arrayOf(
-            Manifest.permission.INTERNET,
-            Manifest.permission.ACCESS_WIFI_STATE
-        )
+        val PERMISSIONS_STORAGE = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        val PERMISSIONS_INTERNET = arrayOf(Manifest.permission.INTERNET, Manifest.permission.ACCESS_WIFI_STATE)
 
         // Used to load the 'native-lib' library on application startup.
         init {
@@ -53,15 +49,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
 
     private val mp3Encoder by lazy { Mp3Encoder() }
-    val minbufferSize by lazy { AudioTrack.getMinBufferSize(SAMPLE_RATE_HZ, AUDIO_OUT_CHANNEL_CONFIG, AUDIO_OUT_FORMAT) }
-    val audioTrack by lazy {
-        AudioTrack(
-            AudioAttributes.Builder().apply {}.build(),
-            AudioFormat.Builder().apply { }.build(),
-            minbufferSize,
-            AudioTrack.MODE_STREAM,
-            AudioManager.AUDIO_SESSION_ID_GENERATE
-        )
+    private val minbufferSize by lazy { AudioTrack.getMinBufferSize(SAMPLE_RATE_HZ, AUDIO_OUT_CHANNEL_CONFIG, AUDIO_OUT_FORMAT) }
+    private val audioTrack by lazy {
+        AudioTrack(AudioAttributes.Builder().apply {
+            setUsage(AudioAttributes.USAGE_MEDIA)
+            setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+        }.build(), AudioFormat.Builder().apply {
+            setSampleRate(SAMPLE_RATE_HZ)
+            setEncoding(AUDIO_OUT_FORMAT)
+            setChannelMask(AUDIO_OUT_CHANNEL_CONFIG)
+        }.build(), minbufferSize, AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +66,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         setContentView(R.layout.activity_main)
         btn_pcm_2_mp3.setOnClickListener(this)
         btn_ffmpeg_play.setOnClickListener(this)
+        btn_audio_track_play.setOnClickListener(this)
         // Android 6以上动态权限申请
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestNecessaryPermission(PERMISSIONS_STORAGE)
@@ -85,7 +83,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 ffmpegPlay()
             }
             R.id.btn_audio_track_play -> {
-                audioTrackPlay()
+                audioTrackPlayOrStop()
             }
             else -> {
                 Log.w(TAG, "onClick# nothing to do.")
@@ -93,7 +91,46 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private fun audioTrackPlay() {
+    private fun audioTrackPlayOrStop() {
+        if (resources.getString(R.string.audio_track_play).equals(btn_audio_track_play.text.toString(), true)) {
+            btn_audio_track_play.text = resources.getString(R.string.audio_track_stop)
+            Thread(Runnable {
+                try {
+                    val pcmPath = Environment.getExternalStorageDirectory().absolutePath + DATA_DIR + PCM_FILE
+                    val pcmFile = File(pcmPath)
+                    if (pcmFile.exists()) {
+                        Log.i(TAG, "audioTrackPlayOrStop# prepare to play pcm.")
+                        val fileIns = FileInputStream(pcmFile)
+                        val tempBuffer = ByteArray(minbufferSize)
+                        while (fileIns.available() > 0) {
+                            val readCount = fileIns.read(tempBuffer)
+                            if (readCount == AudioTrack.ERROR_BAD_VALUE || readCount == AudioTrack.ERROR_INVALID_OPERATION) {
+                                continue
+                            }
+                            if (readCount != 0 && readCount != -1) {
+                                audioTrack.write(tempBuffer, 0, readCount)
+                            }
+                        }
+                        Log.i(TAG, "audioTrackPlayOrStop# play finished.")
+                        runOnUiThread { stopAudioTrack() }
+                    } else {
+                        Log.e(TAG, "audioTrackPlayOrStop# file don't exist!")
+                    }
+                } catch (e: IOException) {
+                    Log.i(TAG, "audioTrackPlayOrStop# ${e.message}")
+                }
+            }).start()
+        } else {
+            Log.i(TAG, "audioTrackPlayOrStop# prepare to stop play pcm.")
+            stopAudioTrack()
+        }
+    }
+
+    private fun stopAudioTrack() {
+        Log.i(TAG, "stopAudioTrack###")
+        audioTrack.play()
+        audioTrack.release()
+        runOnUiThread { btn_audio_track_play.text = resources.getString(R.string.audio_track_play) }
 
     }
 
@@ -112,9 +149,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         Log.i(TAG, "onRequestPermissionsResult===requestCode: $requestCode, permissions: ${permissions.toList()}, grantResults: ${grantResults.toList()}")
-        if (requestCode == PERMISSION_REQUEST_FROM_MAIN &&
-            (permissions.contains(Manifest.permission.READ_EXTERNAL_STORAGE) || permissions.contains(Manifest.permission.WRITE_EXTERNAL_STORAGE))
-        ) {
+        if (requestCode == PERMISSION_REQUEST_FROM_MAIN && (permissions.contains(Manifest.permission.READ_EXTERNAL_STORAGE) || permissions.contains(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
             Log.i(TAG, "onRequestPermissionsResult# permision is granted.")
         } else {
             Log.w(TAG, "onRequestPermissionsResult# permision is denied.")
