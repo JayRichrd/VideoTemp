@@ -3,4 +3,5 @@
     <string name="pcm2mp3"><![CDATA[pcm->mp3]]></string>
     <string name="transform_finish">转换完成</string>
     <string name="ffmpeg_play">ffmpeg/play</string>
+    <string name="audio_track_play">audio_track/play</string>
 </resources>

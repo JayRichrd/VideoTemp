@@ -2,7 +2,10 @@ package com.cain.videotemp
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
 import android.media.AudioFormat
+import android.media.AudioManager
+import android.media.AudioTrack
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -16,6 +19,7 @@ import com.cain.videotemp.audio.Mp3Encoder
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 
+
 class MainActivity : AppCompatActivity(), View.OnClickListener {
     companion object {
         const val TAG = "MainActivity"
@@ -26,6 +30,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         const val SAMPLE_RATE_HZ = 44100
         const val BYTE_RATE = 128
         const val AUDIO_CHANEL = AudioFormat.CHANNEL_IN_MONO
+        const val AUDIO_OUT_CHANNEL_CONFIG = AudioFormat.CHANNEL_OUT_MONO
+        const val AUDIO_OUT_FORMAT = AudioFormat.ENCODING_PCM_16BIT
         const val INIT_OK = 1
         const val INIT_ERROR = 0
 
@@ -45,7 +51,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+
     private val mp3Encoder by lazy { Mp3Encoder() }
+    val minbufferSize by lazy { AudioTrack.getMinBufferSize(SAMPLE_RATE_HZ, AUDIO_OUT_CHANNEL_CONFIG, AUDIO_OUT_FORMAT) }
+    val audioTrack by lazy {
+        AudioTrack(
+            AudioAttributes.Builder().apply {}.build(),
+            AudioFormat.Builder().apply { }.build(),
+            minbufferSize,
+            AudioTrack.MODE_STREAM,
+            AudioManager.AUDIO_SESSION_ID_GENERATE
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,10 +84,17 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             R.id.btn_ffmpeg_play -> {
                 ffmpegPlay()
             }
+            R.id.btn_audio_track_play -> {
+                audioTrackPlay()
+            }
             else -> {
                 Log.w(TAG, "onClick# nothing to do.")
             }
         }
+    }
+
+    private fun audioTrackPlay() {
+
     }
 
     private fun ffmpegPlay() {
@@ -88,7 +112,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         Log.i(TAG, "onRequestPermissionsResult===requestCode: $requestCode, permissions: ${permissions.toList()}, grantResults: ${grantResults.toList()}")
-        if (requestCode == PERMISSION_REQUEST_FROM_MAIN && (permissions.contains(Manifest.permission.READ_EXTERNAL_STORAGE) || permissions.contains(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
+        if (requestCode == PERMISSION_REQUEST_FROM_MAIN &&
+            (permissions.contains(Manifest.permission.READ_EXTERNAL_STORAGE) || permissions.contains(Manifest.permission.WRITE_EXTERNAL_STORAGE))
+        ) {
             Log.i(TAG, "onRequestPermissionsResult# permision is granted.")
         } else {
             Log.w(TAG, "onRequestPermissionsResult# permision is denied.")

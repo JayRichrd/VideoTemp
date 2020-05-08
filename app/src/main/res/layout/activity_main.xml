@@ -29,6 +29,13 @@
             android:layout_width="match_parent"
             android:layout_height="220dp"
             app:play_url="http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4" />
+
+        <Button
+            android:id="@+id/btn_audio_track_play"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/audio_track_play" />
     </LinearLayout>
 
 </ScrollView>
