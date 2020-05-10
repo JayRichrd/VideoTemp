@@ -5,4 +5,6 @@
     <string name="ffmpeg_play">ffmpeg/play</string>
     <string name="audio_track_play">audio_track/play</string>
     <string name="audio_track_stop">audio_track/stop</string>
+    <string name="open_sl_play">open_sl/play</string>
+    <string name="open_sl_stop">open_sl/stop</string>
 </resources>

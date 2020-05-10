@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.cain.videotemp.audio.Mp3Encoder
+import com.cain.videotemp.audio.OpenSLEsDelegate
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.io.FileInputStream
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         const val DATA_DIR = "/videotest/"
         const val PCM_FILE = "background2.pcm"
         const val MP3_FILE = "test.mp3"
+        const val ASSETS_MUSIC_FILE = "mydream.m4a"
         const val SAMPLE_RATE_HZ = 44100
         const val BYTE_RATE = 128
         const val AUDIO_CHANEL = AudioFormat.CHANNEL_IN_MONO
@@ -36,7 +38,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         const val AUDIO_OUT_FORMAT = AudioFormat.ENCODING_PCM_16BIT
         const val INIT_OK = 1
         const val INIT_ERROR = 0
-
 
         val PERMISSIONS_STORAGE = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
         val PERMISSIONS_INTERNET = arrayOf(Manifest.permission.INTERNET, Manifest.permission.ACCESS_WIFI_STATE)
@@ -47,8 +48,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-
     private val mp3Encoder by lazy { Mp3Encoder() }
+    private val openSLEsDelegate by lazy { OpenSLEsDelegate() }
     private val minbufferSize by lazy { AudioTrack.getMinBufferSize(SAMPLE_RATE_HZ, AUDIO_OUT_CHANNEL_CONFIG, AUDIO_OUT_FORMAT) }
     private val audioTrack by lazy {
         AudioTrack(AudioAttributes.Builder().apply {
@@ -67,6 +68,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         btn_pcm_2_mp3.setOnClickListener(this)
         btn_ffmpeg_play.setOnClickListener(this)
         btn_audio_track_play.setOnClickListener(this)
+        btn_open_sl_play.setOnClickListener(this)
         // Android 6以上动态权限申请
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestNecessaryPermission(PERMISSIONS_STORAGE)
@@ -85,10 +87,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             R.id.btn_audio_track_play -> {
                 audioTrackPlayOrStop()
             }
+            R.id.btn_open_sl_play -> {
+                openSlPlay()
+            }
             else -> {
                 Log.w(TAG, "onClick# nothing to do.")
             }
         }
+    }
+
+    private fun openSlPlay() {
+        Log.i(TAG, "openSlPlay###")
+        openSLEsDelegate.playByAssets(assets, ASSETS_MUSIC_FILE)
     }
 
     private fun audioTrackPlayOrStop() {

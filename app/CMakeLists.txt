@@ -39,7 +39,8 @@ add_library( # Sets the name of the library.
              src/main/cpp/lame/vbrquantize.c
              src/main/cpp/lame/VbrTag.c
              src/main/cpp/lame/version.c
-             src/main/cpp/audio/mp3_encode.cpp)
+             src/main/cpp/audio/mp3_encode.cpp
+             )
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
