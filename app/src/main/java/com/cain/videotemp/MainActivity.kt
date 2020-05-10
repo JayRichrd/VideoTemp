@@ -1,6 +1,7 @@
 package com.cain.videotemp
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.AudioFormat
@@ -39,8 +40,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         const val INIT_OK = 1
         const val INIT_ERROR = 0
 
-        val PERMISSIONS_STORAGE = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        val PERMISSIONS_INTERNET = arrayOf(Manifest.permission.INTERNET, Manifest.permission.ACCESS_WIFI_STATE)
+        val PERMISSIONS_STORAGE = arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        val PERMISSIONS_INTERNET = arrayOf(
+                Manifest.permission.INTERNET,
+                Manifest.permission.ACCESS_WIFI_STATE)
 
         // Used to load the 'native-lib' library on application startup.
         init {
@@ -52,14 +57,19 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private val openSLEsDelegate by lazy { OpenSLEsDelegate() }
     private val minbufferSize by lazy { AudioTrack.getMinBufferSize(SAMPLE_RATE_HZ, AUDIO_OUT_CHANNEL_CONFIG, AUDIO_OUT_FORMAT) }
     private val audioTrack by lazy {
-        AudioTrack(AudioAttributes.Builder().apply {
-            setUsage(AudioAttributes.USAGE_MEDIA)
-            setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-        }.build(), AudioFormat.Builder().apply {
-            setSampleRate(SAMPLE_RATE_HZ)
-            setEncoding(AUDIO_OUT_FORMAT)
-            setChannelMask(AUDIO_OUT_CHANNEL_CONFIG)
-        }.build(), minbufferSize, AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE)
+        AudioTrack(
+                AudioAttributes.Builder().apply {
+                    setUsage(AudioAttributes.USAGE_MEDIA)
+                    setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                }.build(),
+                AudioFormat.Builder().apply {
+                    setSampleRate(SAMPLE_RATE_HZ)
+                    setEncoding(AUDIO_OUT_FORMAT)
+                    setChannelMask(AUDIO_OUT_CHANNEL_CONFIG)
+                }.build(),
+                minbufferSize,
+                AudioTrack.MODE_STREAM,
+                AudioManager.AUDIO_SESSION_ID_GENERATE)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +79,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         btn_ffmpeg_play.setOnClickListener(this)
         btn_audio_track_play.setOnClickListener(this)
         btn_open_sl_play.setOnClickListener(this)
+        btn_open_gl.setOnClickListener(this)
         // Android 6以上动态权限申请
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestNecessaryPermission(PERMISSIONS_STORAGE)
@@ -89,6 +100,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             }
             R.id.btn_open_sl_play -> {
                 openSlPlay()
+            }
+            R.id.btn_open_gl -> {
+                startActivity(Intent(this, SimpleRenderActivity::class.java))
             }
             else -> {
                 Log.w(TAG, "onClick# nothing to do.")
@@ -159,7 +173,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         Log.i(TAG, "onRequestPermissionsResult===requestCode: $requestCode, permissions: ${permissions.toList()}, grantResults: ${grantResults.toList()}")
-        if (requestCode == PERMISSION_REQUEST_FROM_MAIN && (permissions.contains(Manifest.permission.READ_EXTERNAL_STORAGE) || permissions.contains(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
+        if (requestCode == PERMISSION_REQUEST_FROM_MAIN &&
+            (permissions.contains(Manifest.permission.READ_EXTERNAL_STORAGE) || permissions.contains(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
             Log.i(TAG, "onRequestPermissionsResult# permision is granted.")
         } else {
             Log.w(TAG, "onRequestPermissionsResult# permision is denied.")
