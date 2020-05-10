@@ -128,7 +128,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                         val tempBuffer = ByteArray(minbufferSize)
                         while (fileIns.available() > 0) {
                             val readCount = fileIns.read(tempBuffer)
-                            if (readCount == AudioTrack.ERROR_BAD_VALUE || readCount == AudioTrack.ERROR_INVALID_OPERATION) {
+                            if (readCount == AudioTrack.ERROR_BAD_VALUE ||
+                                readCount == AudioTrack.ERROR_INVALID_OPERATION) {
                                 continue
                             }
                             if (readCount != 0 && readCount != -1) {
