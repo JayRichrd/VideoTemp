@@ -86,7 +86,9 @@ add_library( # Sets the name of the library.
         lame/vbrquantize.c
         lame/VbrTag.c
         lame/version.c
-        audio/mp3_encode.cpp)
+        audio/mp3_encode.cpp
+        opengl/shader_utils.cpp
+        )
 
 # 查找代码中使用到的系统库
 find_library(
@@ -99,6 +101,8 @@ target_link_libraries( # Specifies the target library.
         # Links the target library to the log library
         # included in the NDK.
         OpenSLES
+        # for opengl es 3.0 library
+        GLESv3
         avcodec
         avfilter
         avformat

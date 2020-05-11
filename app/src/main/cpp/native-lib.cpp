@@ -9,6 +9,9 @@
 #include <sys/types.h>
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
+// openGL
+#include <GLES3/gl3.h>
+#include "opengl/shader_utils.h"
 
 extern "C" {// 必须添加这个，否则会报很多undefined reference错误
 //封装格式处理
@@ -36,9 +39,43 @@ SLObjectItf fdPlayerObject = NULL;
 SLPlayItf fdPlayerPlay = NULL;
 SLVolumeItf fdPlayerVolume = NULL; //声音控制接口
 
+AAssetManager *g_pAssetManager = NULL;
+GLuint g_program = NULL;
+GLint g_position_handle = NULL;
+
 void release();
 
 void createEngine();
+
+void release() {
+    // destroy file descriptor audio player object, and invalidate all associated interfaces
+    if (fdPlayerObject != NULL) {
+        (*fdPlayerObject)->Destroy(fdPlayerObject);
+        fdPlayerObject = NULL;
+        fdPlayerPlay = NULL;
+        fdPlayerVolume = NULL;
+    }
+
+    // destroy output mix object, and invalidate all associated interfaces
+    if (outputMixObject != NULL) {
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject = NULL;
+        outputMixEnvironmentalReverb = NULL;
+    }
+
+    // destroy engine object, and invalidate all associated interfaces
+    if (engineObject != NULL) {
+        (*engineObject)->Destroy(engineObject);
+        engineObject = NULL;
+        engineEngine = NULL;
+    }
+}
+
+void createEngine() {
+    slCreateEngine(&engineObject, 0, NULL, 0, NULL, NULL);
+    (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
+    (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
+}
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_cain_videotemp_MainActivity_stringFromJNI(JNIEnv *env, jobject /* this */) {
@@ -239,32 +276,42 @@ Java_com_cain_videotemp_audio_OpenSLEsDelegate_playByAssets(JNIEnv *env, jobject
     (*fdPlayerVolume)->SetVolumeLevel(fdPlayerVolume, 20 * -50);
 }
 
-void release() {
-    // destroy file descriptor audio player object, and invalidate all associated interfaces
-    if (fdPlayerObject != NULL) {
-        (*fdPlayerObject)->Destroy(fdPlayerObject);
-        fdPlayerObject = NULL;
-        fdPlayerPlay = NULL;
-        fdPlayerVolume = NULL;
-    }
-
-    // destroy output mix object, and invalidate all associated interfaces
-    if (outputMixObject != NULL) {
-        (*outputMixObject)->Destroy(outputMixObject);
-        outputMixObject = NULL;
-        outputMixEnvironmentalReverb = NULL;
-    }
-
-    // destroy engine object, and invalidate all associated interfaces
-    if (engineObject != NULL) {
-        (*engineObject)->Destroy(engineObject);
-        engineObject = NULL;
-        engineEngine = NULL;
-    }
+extern "C" JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_NativeRender_glDraw(JNIEnv *env, jobject thiz) {
+    GLint vertexCount = 3;
+    // OpenGL的世界坐标系是 [-1, -1, 1, 1]
+    GLfloat vertices[] = {0.0f, 0.5f, 0.0f, // 第一个点（x, y, z）
+                          -0.5f, -0.5f, 0.0f, // 第二个点（x, y, z）
+                          0.5f, -0.5f, 0.0f};
+    glClear(GL_COLOR_BUFFER_BIT); // clear color buffer
+    // 1. 选择使用的程序
+    glUseProgram(g_program);
+    // 2. 加载顶点数据
+    glVertexAttribPointer(g_position_handle, vertexCount, GL_FLOAT, GL_FALSE, 3 * 4, vertices);
+    glEnableVertexAttribArray(g_position_handle);
+    // 3. 绘制
+    glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 }
 
-void createEngine() {
-    slCreateEngine(&engineObject, 0, NULL, 0, NULL, NULL);
-    (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
-    (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
+extern "C" JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_NativeRender_glResize(JNIEnv *env, jobject thiz, jint width, jint height) {
+    glViewport(0, 0, width, height); // 设置视距窗口
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_NativeRender_glInit(JNIEnv *env, jobject thiz) {
+    char *vertexShaderSource = readAssetFile("vertex.vsh", g_pAssetManager);
+    char *fragmentShaderSource = readAssetFile("fragment.fsh", g_pAssetManager);
+    g_program = CreateProgram(vertexShaderSource, fragmentShaderSource);
+    if (g_program == GL_NONE) {}
+    // vPosition 是在 'vertex.vsh' 文件中定义的
+    g_position_handle = glGetAttribLocation(g_program, "vPosition");
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // 背景颜色设置为黑色 RGBA (range: 0.0 ~ 1.0)
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_NativeRender_registerAssetManager(JNIEnv *env, jobject thiz, jobject asset_manager) {
+    if (asset_manager) {
+        g_pAssetManager = AAssetManager_fromJava(env, asset_manager);
+    }
 }

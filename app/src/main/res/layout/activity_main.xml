@@ -45,12 +45,18 @@
             android:text="@string/open_sl_play" />
 
         <Button
-            android:id="@+id/btn_open_gl"
+            android:id="@+id/btn_java_open_gl"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="@string/open_gl_pic" />
+            android:text="@string/open_gl_java_pic" />
 
+        <Button
+            android:id="@+id/btn_jni_open_gl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/open_gl_jni_pic" />
     </LinearLayout>
 
 </ScrollView>

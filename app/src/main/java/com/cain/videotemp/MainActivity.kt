@@ -16,6 +16,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.cain.videotemp.SimpleRenderActivity.Companion.TYPE_JAVA_RENDER
+import com.cain.videotemp.SimpleRenderActivity.Companion.TYPE_JNI_RENDER
+import com.cain.videotemp.SimpleRenderActivity.Companion.TYPE_RENDER
 import com.cain.videotemp.audio.Mp3Encoder
 import com.cain.videotemp.audio.OpenSLEsDelegate
 import kotlinx.android.synthetic.main.activity_main.*
@@ -79,7 +82,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         btn_ffmpeg_play.setOnClickListener(this)
         btn_audio_track_play.setOnClickListener(this)
         btn_open_sl_play.setOnClickListener(this)
-        btn_open_gl.setOnClickListener(this)
+        btn_java_open_gl.setOnClickListener(this)
+        btn_jni_open_gl.setOnClickListener(this)
         // Android 6以上动态权限申请
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestNecessaryPermission(PERMISSIONS_STORAGE)
@@ -101,8 +105,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             R.id.btn_open_sl_play -> {
                 openSlPlay()
             }
-            R.id.btn_open_gl -> {
-                startActivity(Intent(this, SimpleRenderActivity::class.java))
+            R.id.btn_java_open_gl -> {
+                val intent = Intent(this, SimpleRenderActivity::class.java)
+                intent.putExtra(TYPE_RENDER, TYPE_JAVA_RENDER)
+                startActivity(intent)
+            }
+            R.id.btn_jni_open_gl -> {
+                val intent = Intent(this, SimpleRenderActivity::class.java)
+                intent.putExtra(TYPE_RENDER, TYPE_JNI_RENDER)
+                startActivity(intent)
             }
             else -> {
                 Log.w(TAG, "onClick# nothing to do.")

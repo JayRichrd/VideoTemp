@@ -3,6 +3,8 @@
 //
 #include <stdio.h>
 #include "../lame/lame.h"
+#include <GLES3/gl3.h>
+
 
 #ifndef VIDEOTEMP_MP3_ENCODE_H
 #define VIDEOTEMP_MP3_ENCODE_H
