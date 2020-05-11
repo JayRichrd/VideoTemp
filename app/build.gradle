@@ -35,7 +35,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path file('CMakeLists.txt')
+            path "src/main/cpp/CMakeLists.txt"
             version "3.10.2"
         }
     }
@@ -45,7 +45,7 @@ android {
             // 指定存放native代码的目录，这里指定为jni和cpp皆可
             jni.srcDirs = ['src/main/jni', 'src/main/cpp/']
             // 指定jni库的存放目录为libs
-            jniLibs.srcDirs = ['libs']
+            jniLibs.srcDirs = ['libs', 'src/main/cpp/ffmpeg/jniLibs/']
         }
     }
 

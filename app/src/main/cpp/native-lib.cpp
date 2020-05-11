@@ -2,6 +2,13 @@
 #include <string>
 #include "lame/lame.h"
 #include "audio/mp3_encode.h"
+// opensl
+#include <SLES/OpenSLES.h>
+#include <SLES/OpenSLES_Android.h>
+// native asset manager
+#include <sys/types.h>
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
 
 extern "C" {// 必须添加这个，否则会报很多undefined reference错误
 //封装格式处理
@@ -14,8 +21,24 @@ extern "C" {// 必须添加这个，否则会报很多undefined reference错误
 //像素处理
 #include <libswscale/swscale.h>
 #include <unistd.h>
+}
 
 Mp3Encoder *mp3_encoder = NULL;
+// 引擎接口
+SLObjectItf engineObject = NULL;
+SLEngineItf engineEngine = NULL;
+//混音器
+SLObjectItf outputMixObject = NULL;
+SLEnvironmentalReverbItf outputMixEnvironmentalReverb = NULL;
+SLEnvironmentalReverbSettings reverbSettings = SL_I3DL2_ENVIRONMENT_PRESET_STONECORRIDOR;
+//assets播放器
+SLObjectItf fdPlayerObject = NULL;
+SLPlayItf fdPlayerPlay = NULL;
+SLVolumeItf fdPlayerVolume = NULL; //声音控制接口
+
+void release();
+
+void createEngine();
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_cain_videotemp_MainActivity_stringFromJNI(JNIEnv *env, jobject /* this */) {
@@ -23,23 +46,18 @@ Java_com_cain_videotemp_MainActivity_stringFromJNI(JNIEnv *env, jobject /* this 
     return env->NewStringUTF(get_lame_version());
 }
 
-extern "C"
-JNIEXPORT void JNICALL
+extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_audio_Mp3Encoder_encode(JNIEnv *env, jobject thiz) {
     mp3_encoder->encode_data();
 }
 
-extern "C"
-JNIEXPORT void JNICALL
+extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_audio_Mp3Encoder_destroy(JNIEnv *env, jobject thiz) {
     mp3_encoder->destory();
 }
 
-extern "C"
-JNIEXPORT jint JNICALL
-Java_com_cain_videotemp_audio_Mp3Encoder_initEcoder(JNIEnv *env, jobject thiz, jstring pcmPath,
-                                                    jint audioChanel, jint byteRate,
-                                                    jint sampleRate, jstring mp3Path) {
+extern "C" JNIEXPORT jint JNICALL
+Java_com_cain_videotemp_audio_Mp3Encoder_initEcoder(JNIEnv *env, jobject thiz, jstring pcmPath, jint audioChanel, jint byteRate, jint sampleRate, jstring mp3Path) {
     const char *pcm_path = env->GetStringUTFChars(pcmPath, NULL);
     const char *mp3_path = env->GetStringUTFChars(mp3Path, NULL);
     mp3_encoder = new Mp3Encoder();
@@ -48,8 +66,8 @@ Java_com_cain_videotemp_audio_Mp3Encoder_initEcoder(JNIEnv *env, jobject thiz, j
     env->ReleaseStringUTFChars(mp3Path, mp3_path);
     return ret;
 }
-extern "C"
-JNIEXPORT void JNICALL
+
+extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_video_FFVideoPlayer_render(JNIEnv *env, jobject thiz, jstring play_url, jobject surface) {
     const char *url = env->GetStringUTFChars(play_url, 0);
     /**
@@ -118,10 +136,8 @@ Java_com_cain_videotemp_video_FFVideoPlayer_render(JNIEnv *env, jobject thiz, js
         return;
     }
 
-    SwsContext *swsContext = sws_getContext(avCodecContext->width, avCodecContext->height,
-                                            avCodecContext->pix_fmt, avCodecContext->width,
-                                            avCodecContext->height, AV_PIX_FMT_RGBA, SWS_BICUBIC,
-                                            NULL, NULL, NULL);
+    SwsContext *swsContext = sws_getContext(avCodecContext->width, avCodecContext->height, avCodecContext->pix_fmt, avCodecContext->width, avCodecContext->height, AV_PIX_FMT_RGBA,
+                                            SWS_BICUBIC, NULL, NULL, NULL);
     // 视频缓冲区
     ANativeWindow_Buffer nativeWindow_outBuffer;
 
@@ -164,4 +180,91 @@ Java_com_cain_videotemp_video_FFVideoPlayer_render(JNIEnv *env, jobject thiz, js
 
     env->ReleaseStringUTFChars(play_url, url);
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cain_videotemp_audio_OpenSLEsDelegate_playByAssets(JNIEnv *env, jobject thiz, jobject asset_manager, jstring file_name) {
+    release();
+    const char *utf8 = env->GetStringUTFChars(file_name, NULL);
+    // use asset manager to open asset by filename
+    AAssetManager *mgr = AAssetManager_fromJava(env, asset_manager);
+    AAsset *asset = AAssetManager_open(mgr, utf8, AASSET_MODE_UNKNOWN);
+    env->ReleaseStringUTFChars(file_name, utf8);
+    // open asset as file descriptor
+    off_t start, length;
+    int fd = AAsset_openFileDescriptor(asset, &start, &length);
+    AAsset_close(asset);
+    SLresult result;
+    //第一步，创建引擎
+    createEngine();
+    //第二步，创建混音器
+    const SLInterfaceID mids[1] = {SL_IID_ENVIRONMENTALREVERB};
+    const SLboolean mreq[1] = {SL_BOOLEAN_FALSE};
+    result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 1, mids, mreq);
+    (void) result;
+    result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
+    (void) result;
+    result = (*outputMixObject)->GetInterface(outputMixObject, SL_IID_ENVIRONMENTALREVERB, &outputMixEnvironmentalReverb);
+    if (SL_RESULT_SUCCESS == result) {
+        result = (*outputMixEnvironmentalReverb)->SetEnvironmentalReverbProperties(outputMixEnvironmentalReverb, &reverbSettings);
+        (void) result;
+    }
+    //第三步，设置播放器参数和创建播放器
+    // 1、配置 audio source
+    SLDataLocator_AndroidFD loc_fd = {SL_DATALOCATOR_ANDROIDFD, fd, start, length};
+    SLDataFormat_MIME format_mime = {SL_DATAFORMAT_MIME, NULL, SL_CONTAINERTYPE_UNSPECIFIED};
+    SLDataSource audioSrc = {&loc_fd, &format_mime};
+    // 2、 配置 audio sink
+    SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObject};
+    SLDataSink audioSnk = {&loc_outmix, NULL};
+    // 创建播放器
+    const SLInterfaceID ids[3] = {SL_IID_SEEK, SL_IID_MUTESOLO, SL_IID_VOLUME};
+    const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    result = (*engineEngine)->CreateAudioPlayer(engineEngine, &fdPlayerObject, &audioSrc, &audioSnk, 3, ids, req);
+    (void) result;
+    // 实现播放器
+    result = (*fdPlayerObject)->Realize(fdPlayerObject, SL_BOOLEAN_FALSE);
+    (void) result;
+    // 得到播放器接口
+    result = (*fdPlayerObject)->GetInterface(fdPlayerObject, SL_IID_PLAY, &fdPlayerPlay);
+    (void) result;
+    // 得到声音控制接口
+    result = (*fdPlayerObject)->GetInterface(fdPlayerObject, SL_IID_VOLUME, &fdPlayerVolume);
+    (void) result;
+    // 设置播放状态
+    if (NULL != fdPlayerPlay) {
+        result = (*fdPlayerPlay)->SetPlayState(fdPlayerPlay, SL_PLAYSTATE_PLAYING);
+        (void) result;
+    }
+    //设置播放音量 （100 * -50：静音 ）
+    (*fdPlayerVolume)->SetVolumeLevel(fdPlayerVolume, 20 * -50);
+}
+
+void release() {
+    // destroy file descriptor audio player object, and invalidate all associated interfaces
+    if (fdPlayerObject != NULL) {
+        (*fdPlayerObject)->Destroy(fdPlayerObject);
+        fdPlayerObject = NULL;
+        fdPlayerPlay = NULL;
+        fdPlayerVolume = NULL;
+    }
+
+    // destroy output mix object, and invalidate all associated interfaces
+    if (outputMixObject != NULL) {
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject = NULL;
+        outputMixEnvironmentalReverb = NULL;
+    }
+
+    // destroy engine object, and invalidate all associated interfaces
+    if (engineObject != NULL) {
+        (*engineObject)->Destroy(engineObject);
+        engineObject = NULL;
+        engineEngine = NULL;
+    }
+}
+
+void createEngine() {
+    slCreateEngine(&engineObject, 0, NULL, 0, NULL, NULL);
+    (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
+    (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
 }
