@@ -148,7 +148,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                             }
                         }
                         Log.i(TAG, "audioTrackPlayOrStop# play finished.")
-                        runOnUiThread { stopAudioTrack() }
+                        stopAudioTrack()
                     } else {
                         Log.e(TAG, "audioTrackPlayOrStop# file don't exist!")
                     }
