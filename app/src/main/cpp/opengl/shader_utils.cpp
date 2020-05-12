@@ -3,12 +3,14 @@
 //
 
 #include "shader_utils.h"
+#include "log_util.h"
 #include <stdlib.h>
 
 GLuint LoadShader(GLenum type, const char *shaderSource) {
     // 1. create shader
     GLuint shader = glCreateShader(type);
     if (shader == GL_NONE) {
+        LOGE("create shader failed! type: %d", type);
         return GL_NONE;
     }
     // 2. load shader source
@@ -24,6 +26,7 @@ GLuint LoadShader(GLenum type, const char *shaderSource) {
         if (len > 1) {
             char *log = static_cast<char *>(malloc(sizeof(char) * len));
             glGetShaderInfoLog(shader, len, NULL, log);
+            LOGE("Error compiling shader: %s", log);
             free(log);
         }
         glDeleteShader(shader); // delete shader
@@ -36,15 +39,18 @@ GLuint CreateProgram(const char *vertexSource, const char *fragmentSource) {
     // 1. load shader
     GLuint vertexShader = LoadShader(GL_VERTEX_SHADER, vertexSource);
     if (vertexShader == GL_NONE) {
+        LOGE("load vertex shader failed! ");
         return GL_NONE;
     }
     GLuint fragmentShader = LoadShader(GL_FRAGMENT_SHADER, fragmentSource);
-    if (fragmentShader == GL_NONE) {
+    if (vertexShader == GL_NONE) {
+        LOGE("load fragment shader failed! ");
         return GL_NONE;
     }
     // 2. create gl program
     GLuint program = glCreateProgram();
     if (program == GL_NONE) {
+        LOGE("create program failed! ");
         return GL_NONE;
     }
     // 3. attach shader
@@ -64,6 +70,7 @@ GLuint CreateProgram(const char *vertexSource, const char *fragmentSource) {
         if (len > 1) {
             char *log = static_cast<char *>(malloc(sizeof(char) * len));
             glGetProgramInfoLog(program, len, NULL, log);
+            LOGE("Error link program: %s", log);
             free(log);
         }
         glDeleteProgram(program); // delete program
@@ -74,6 +81,7 @@ GLuint CreateProgram(const char *vertexSource, const char *fragmentSource) {
 
 char *readAssetFile(const char *filename, AAssetManager *mgr) {
     if (mgr == NULL) {
+        LOGE("pAssetManager is null!");
         return NULL;
     }
     AAsset *pAsset = AAssetManager_open(mgr, filename, AASSET_MODE_UNKNOWN);
@@ -81,6 +89,7 @@ char *readAssetFile(const char *filename, AAssetManager *mgr) {
     char *pBuffer = (char *) malloc(len + 1);
     pBuffer[len] = '\0';
     int numByte = AAsset_read(pAsset, pBuffer, len);
+    LOGD("numByte: %d, len: %d", numByte, len);
     AAsset_close(pAsset);
     return pBuffer;
 }

@@ -5,15 +5,23 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
+#IF (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
+#    ADD_DEFINITIONS(-DWindows)
+#ELSE (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux")
+#    ADD_DEFINITIONS(-DLinux)
+#ENDIF ()
+
 # 支持C++11标准和GNU扩展特性
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
 # 定义so库和头文件所在目录，方面后面使用
 set(ffmpeg_lib_dir ${CMAKE_SOURCE_DIR}/ffmpeg/jniLibs/${ANDROID_ABI})
 set(ffmpeg_head_dir ${CMAKE_SOURCE_DIR}/ffmpeg)
+set(opengl_head_dir ${CMAKE_SOURCE_DIR}/opengl)
 
 # 添加头文件目录
 include_directories(${ffmpeg_head_dir}/include)
+#include_directories(${opengl_head_dir}/include)
 
 # 添加ffmpeg相关的so库
 add_library(avutil

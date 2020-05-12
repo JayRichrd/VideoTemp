@@ -12,6 +12,7 @@
 // openGL
 #include <GLES3/gl3.h>
 #include "opengl/shader_utils.h"
+#include "opengl/log_util.h"
 
 #define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0]))
 
@@ -280,9 +281,11 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_NativeRender_glDraw(JNIEnv *env, jobject thiz) {
     GLint vertexCount = 3;
     // OpenGL的世界坐标系是 [-1, -1, 1, 1]
-    GLfloat vertices[] = {0.0f, 0.5f, 0.0f, // 第一个点（x, y, z）
-                          -0.5f, -0.5f, 0.0f, // 第二个点（x, y, z）
-                          0.5f, -0.5f, 0.0f};
+    GLfloat vertices[] = {
+            0.0f, 0.5f, 0.0f, // 第一个点（x, y, z）
+            -0.5f, -0.5f, 0.0f, // 第二个点（x, y, z）
+            0.5f, -0.5f, 0.0f // 第三个点（x, y, z）
+    };
     glClear(GL_COLOR_BUFFER_BIT); // clear color buffer
     // 1. 选择使用的程序
     glUseProgram(g_program);
@@ -303,9 +306,12 @@ Java_com_cain_videotemp_pic_opengl_NativeRender_glInit(JNIEnv *env, jobject thiz
     char *vertexShaderSource = readAssetFile("vertex.vsh", g_pAssetManager);
     char *fragmentShaderSource = readAssetFile("fragment.fsh", g_pAssetManager);
     g_program = CreateProgram(vertexShaderSource, fragmentShaderSource);
-    if (g_program == GL_NONE) {}
+    if (g_program == GL_NONE) {
+        LOGE("gl init failed!");
+    }
     // vPosition 是在 'vertex.vsh' 文件中定义的
-    g_position_handle = glGetAttribLocation(g_program, "vPosition");
+    g_position_handle =glGetAttribLocation(g_program, "vPosition");
+    LOGD("g_position_handle: %d", g_position_handle);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // 背景颜色设置为黑色 RGBA (range: 0.0 ~ 1.0)
 }
 
@@ -313,6 +319,8 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_NativeRender_registerAssetManager(JNIEnv *env, jobject thiz, jobject asset_manager) {
     if (asset_manager) {
         g_pAssetManager = AAssetManager_fromJava(env, asset_manager);
+    } else {
+        LOGE("assetManager is null!")
     }
 }
 
