@@ -21,14 +21,10 @@ class SimpleRenderActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_simple_render)
-        showOpenGLVersion()
+        (getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)?.let {
+            Toast.makeText(this, "OpenGL ${it.deviceConfigurationInfo.glEsVersion}", Toast.LENGTH_LONG).show()
+        }
         openGLPic()
-    }
-
-    private fun showOpenGLVersion() {
-        val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val configInfo = am.deviceConfigurationInfo
-        Toast.makeText(this, "OpenGL ${configInfo.glEsVersion}", Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroy() {

@@ -198,7 +198,7 @@ Java_com_cain_videotemp_audio_OpenSLEsDelegate_playByAssets(JNIEnv *env, jobject
     off_t start, length;
     int fd = AAsset_openFileDescriptor(asset, &start, &length);
     AAsset_close(asset);
-    //第一步，创建引擎
+    //第一步，创建引擎，并初始化获取接口方法
     createEngine();
     //第二步，创建混音器，并初始化获取接口方法
     const SLInterfaceID mids[1] = {SL_IID_ENVIRONMENTALREVERB};
