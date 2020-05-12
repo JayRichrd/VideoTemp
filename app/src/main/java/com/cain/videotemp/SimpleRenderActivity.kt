@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.cain.videotemp.pic.opengl.BitmapDrawer
 import com.cain.videotemp.pic.opengl.NativeRender
 import com.cain.videotemp.pic.opengl.SimpleRender
-import kotlinx.android.synthetic.main.activity_simple_render.*
 
 class SimpleRenderActivity : AppCompatActivity() {
     companion object {
@@ -28,6 +27,7 @@ class SimpleRenderActivity : AppCompatActivity() {
         (getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)?.let {
             Toast.makeText(this, "OpenGL ${it.deviceConfigurationInfo.glEsVersion}", Toast.LENGTH_LONG).show()
         }
+
         val render: GLSurfaceView.Renderer = when (intent.getIntExtra(TYPE_RENDER, TYPE_JAVA_RENDER)) {
             TYPE_JAVA_RENDER -> {
                 getJavaRender()

@@ -44,7 +44,6 @@ SLPlayItf fdPlayerPlay = NULL;
 //声音控制接口
 SLVolumeItf fdPlayerVolume = NULL;
 
-AAssetManager *g_pAssetManager = NULL;
 GLuint g_program = NULL;
 GLint g_position_handle = NULL;
 
@@ -302,10 +301,11 @@ Java_com_cain_videotemp_pic_opengl_NativeRender_glResize(JNIEnv *env, jobject th
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_cain_videotemp_pic_opengl_NativeRender_glInit(JNIEnv *env, jobject thiz) {
-    char *vertexShaderSource = readAssetFile("vertex.vsh", g_pAssetManager);
-    char *fragmentShaderSource = readAssetFile("fragment.fsh", g_pAssetManager);
-    g_program = CreateProgram(vertexShaderSource, fragmentShaderSource);
+Java_com_cain_videotemp_pic_opengl_NativeRender_glInit(JNIEnv *env, jobject thiz,jobject asset_manager) {
+    AAssetManager *am = AAssetManager_fromJava(env, asset_manager);
+    char *vertexShaderSource = read_asset_file("vertex.vsh", am);
+    char *fragmentShaderSource = read_asset_file("fragment.fsh", am);
+    g_program = create_program(vertexShaderSource, fragmentShaderSource);
     if (g_program == GL_NONE) {
         LOGE("gl init failed!");
     }
@@ -313,15 +313,6 @@ Java_com_cain_videotemp_pic_opengl_NativeRender_glInit(JNIEnv *env, jobject thiz
     g_position_handle =glGetAttribLocation(g_program, "vPosition");
     LOGD("g_position_handle: %d", g_position_handle);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // 背景颜色设置为黑色 RGBA (range: 0.0 ~ 1.0)
-}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_cain_videotemp_pic_opengl_NativeRender_registerAssetManager(JNIEnv *env, jobject thiz, jobject asset_manager) {
-    if (asset_manager) {
-        g_pAssetManager = AAssetManager_fromJava(env, asset_manager);
-    } else {
-        LOGE("assetManager is null!")
-    }
 }
 
 extern "C"

@@ -6,7 +6,7 @@
 #include "log_util.h"
 #include <stdlib.h>
 
-GLuint LoadShader(GLenum type, const char *shaderSource) {
+GLuint load_shader(GLenum type, const char *shader_source) {
     // 1. create shader
     GLuint shader = glCreateShader(type);
     if (shader == GL_NONE) {
@@ -14,7 +14,7 @@ GLuint LoadShader(GLenum type, const char *shaderSource) {
         return GL_NONE;
     }
     // 2. load shader source
-    glShaderSource(shader, 1, &shaderSource, NULL);
+    glShaderSource(shader, 1, &shader_source, NULL);
     // 3. compile shared source
     glCompileShader(shader);
     // 4. check compile status
@@ -35,14 +35,14 @@ GLuint LoadShader(GLenum type, const char *shaderSource) {
     return shader;
 }
 
-GLuint CreateProgram(const char *vertexSource, const char *fragmentSource) {
+GLuint create_program(const char *vertex_source, const char *fragment_source) {
     // 1. load shader
-    GLuint vertexShader = LoadShader(GL_VERTEX_SHADER, vertexSource);
+    GLuint vertexShader = load_shader(GL_VERTEX_SHADER, vertex_source);
     if (vertexShader == GL_NONE) {
         LOGE("load vertex shader failed! ");
         return GL_NONE;
     }
-    GLuint fragmentShader = LoadShader(GL_FRAGMENT_SHADER, fragmentSource);
+    GLuint fragmentShader = load_shader(GL_FRAGMENT_SHADER, fragment_source);
     if (vertexShader == GL_NONE) {
         LOGE("load fragment shader failed! ");
         return GL_NONE;
@@ -79,12 +79,12 @@ GLuint CreateProgram(const char *vertexSource, const char *fragmentSource) {
     return program;
 }
 
-char *readAssetFile(const char *filename, AAssetManager *mgr) {
-    if (mgr == NULL) {
+char *read_asset_file(const char *file_name, AAssetManager *am) {
+    if (am == NULL) {
         LOGE("pAssetManager is null!");
         return NULL;
     }
-    AAsset *pAsset = AAssetManager_open(mgr, filename, AASSET_MODE_UNKNOWN);
+    AAsset *pAsset = AAssetManager_open(am, file_name, AASSET_MODE_UNKNOWN);
     off_t len = AAsset_getLength(pAsset);
     char *pBuffer = (char *) malloc(len + 1);
     pBuffer[len] = '\0';

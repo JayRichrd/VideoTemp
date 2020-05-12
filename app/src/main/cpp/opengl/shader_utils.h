@@ -8,8 +8,8 @@
 #ifndef VIDEOTEMP_SHADER_UTILS_H
 #define VIDEOTEMP_SHADER_UTILS_H
 
-GLuint LoadShader(GLenum type, const char *shaderSource);
-GLuint CreateProgram(const char* vertexSource, const char* fragmentSource);
-char *readAssetFile(const char *filename, AAssetManager *mgr);
+GLuint load_shader(GLenum type, const char *shader_source);
+GLuint create_program(const char* vertex_source, const char* fragment_source);
+char *read_asset_file(const char *file_name, AAssetManager *am);
 
 #endif //VIDEOTEMP_SHADER_UTILS_H

@@ -21,12 +21,10 @@ class NativeRender(val assetManager: AssetManager) : GLSurfaceView.Renderer {
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        registerAssetManager(assetManager)
-        glInit()
+        glInit(assetManager)
     }
 
-    external fun registerAssetManager(assetManager: AssetManager)
-    external fun glInit()
+    external fun glInit(assetManager: AssetManager)
     external fun glResize(width: Int, height: Int)
     external fun glDraw()
 }
