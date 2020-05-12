@@ -86,7 +86,7 @@ void createEngine() {
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_cain_videotemp_MainActivity_stringFromJNI(JNIEnv *env, jobject /* this */) {
+Java_com_cain_videotemp_MainActivity_stringFromJNI(JNIEnv *env, jobject thiz ) {
     std::string hello = "Hello from C++";
     return env->NewStringUTF(get_lame_version());
 }
