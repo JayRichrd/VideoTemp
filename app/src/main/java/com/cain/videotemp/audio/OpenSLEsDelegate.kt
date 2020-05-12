@@ -13,4 +13,14 @@ class OpenSLEsDelegate {
      * @param fileName assets目录下的文件名
      */
     external fun playByAssets(assetManager: AssetManager, fileName: String)
+
+    /**
+     * 暂停播放
+     */
+    external fun pause()
+
+    /**
+     * 释放资源
+     */
+    external fun release()
 }

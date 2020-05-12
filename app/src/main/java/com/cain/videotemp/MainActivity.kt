@@ -44,11 +44,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         const val INIT_ERROR = 0
 
         val PERMISSIONS_STORAGE = arrayOf(
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE)
         val PERMISSIONS_INTERNET = arrayOf(
-                Manifest.permission.INTERNET,
-                Manifest.permission.ACCESS_WIFI_STATE)
+            Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_WIFI_STATE)
 
         // Used to load the 'native-lib' library on application startup.
         init {
@@ -61,18 +61,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private val minbufferSize by lazy { AudioTrack.getMinBufferSize(SAMPLE_RATE_HZ, AUDIO_OUT_CHANNEL_CONFIG, AUDIO_OUT_FORMAT) }
     private val audioTrack by lazy {
         AudioTrack(
-                AudioAttributes.Builder().apply {
-                    setUsage(AudioAttributes.USAGE_MEDIA)
-                    setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                }.build(),
-                AudioFormat.Builder().apply {
-                    setSampleRate(SAMPLE_RATE_HZ)
-                    setEncoding(AUDIO_OUT_FORMAT)
-                    setChannelMask(AUDIO_OUT_CHANNEL_CONFIG)
-                }.build(),
-                minbufferSize,
-                AudioTrack.MODE_STREAM,
-                AudioManager.AUDIO_SESSION_ID_GENERATE)
+            AudioAttributes.Builder().apply {
+                setUsage(AudioAttributes.USAGE_MEDIA)
+                setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            }.build(),
+            AudioFormat.Builder().apply {
+                setSampleRate(SAMPLE_RATE_HZ)
+                setEncoding(AUDIO_OUT_FORMAT)
+                setChannelMask(AUDIO_OUT_CHANNEL_CONFIG)
+            }.build(),
+            minbufferSize,
+            AudioTrack.MODE_STREAM,
+            AudioManager.AUDIO_SESSION_ID_GENERATE)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,6 +91,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        openSLEsDelegate.release()
+    }
+
     override fun onClick(v: View) {
         when (v.id) {
             R.id.btn_pcm_2_mp3 -> {
@@ -103,7 +108,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 audioTrackPlayOrStop()
             }
             R.id.btn_open_sl_play -> {
-                openSlPlay()
+                openSlPlayOrPause()
             }
             R.id.btn_java_open_gl -> {
                 val intent = Intent(this, SimpleRenderActivity::class.java)
@@ -121,9 +126,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private fun openSlPlay() {
-        Log.i(TAG, "openSlPlay###")
-        openSLEsDelegate.playByAssets(assets, ASSETS_MUSIC_FILE)
+    private fun openSlPlayOrPause() {
+        if (resources.getString(R.string.open_sl_play) == btn_open_sl_play.text.toString()) {
+            Log.i(TAG, "openSlPlayOrPause### prepare to play.")
+            btn_open_sl_play.text = resources.getString(R.string.open_sl_pause)
+            openSLEsDelegate.playByAssets(assets, ASSETS_MUSIC_FILE)
+        } else {
+            Log.i(TAG, "openSlPlayOrPause### prepare to pause.")
+            btn_open_sl_play.text = resources.getString(R.string.open_sl_play)
+            openSLEsDelegate.pause()
+        }
     }
 
     private fun audioTrackPlayOrStop() {
@@ -139,8 +151,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                         val tempBuffer = ByteArray(minbufferSize)
                         while (fileIns.available() > 0) {
                             val readCount = fileIns.read(tempBuffer)
-                            if (readCount == AudioTrack.ERROR_BAD_VALUE ||
-                                readCount == AudioTrack.ERROR_INVALID_OPERATION) {
+                            if (readCount == AudioTrack.ERROR_BAD_VALUE || readCount == AudioTrack.ERROR_INVALID_OPERATION) {
                                 continue
                             }
                             if (readCount != 0 && readCount != -1) {

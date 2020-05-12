@@ -25,7 +25,9 @@ class SimpleRenderActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val glSurfaceView = GLSurfaceView(this)
         //setContentView(R.layout.activity_simple_render)
-        showOpenGLVersion()
+        (getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)?.let {
+            Toast.makeText(this, "OpenGL ${it.deviceConfigurationInfo.glEsVersion}", Toast.LENGTH_LONG).show()
+        }
         val render: GLSurfaceView.Renderer = when (intent.getIntExtra(TYPE_RENDER, TYPE_JAVA_RENDER)) {
             TYPE_JAVA_RENDER -> {
                 getJavaRender()
@@ -42,12 +44,6 @@ class SimpleRenderActivity : AppCompatActivity() {
         glSurfaceView.setRenderer(render)
         glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
         setContentView(glSurfaceView)
-    }
-
-    private fun showOpenGLVersion() {
-        val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val configInfo = am.deviceConfigurationInfo
-        Toast.makeText(this, "OpenGL ${configInfo.glEsVersion}", Toast.LENGTH_LONG).show()
     }
 
     private fun getJavaRender(): GLSurfaceView.Renderer = SimpleRender().apply {

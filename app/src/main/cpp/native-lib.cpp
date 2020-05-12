@@ -13,6 +13,8 @@
 #include <GLES3/gl3.h>
 #include "opengl/shader_utils.h"
 
+#define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0]))
+
 extern "C" {// 必须添加这个，否则会报很多undefined reference错误
 //封装格式处理
 #include <libavformat/avformat.h>
@@ -27,8 +29,9 @@ extern "C" {// 必须添加这个，否则会报很多undefined reference错误
 }
 
 Mp3Encoder *mp3_encoder = NULL;
-// 引擎接口
+// 引擎对象
 SLObjectItf engineObject = NULL;
+// 引擎方法接口
 SLEngineItf engineEngine = NULL;
 //混音器
 SLObjectItf outputMixObject = NULL;
@@ -37,7 +40,8 @@ SLEnvironmentalReverbSettings reverbSettings = SL_I3DL2_ENVIRONMENT_PRESET_STONE
 //assets播放器
 SLObjectItf fdPlayerObject = NULL;
 SLPlayItf fdPlayerPlay = NULL;
-SLVolumeItf fdPlayerVolume = NULL; //声音控制接口
+//声音控制接口
+SLVolumeItf fdPlayerVolume = NULL;
 
 AAssetManager *g_pAssetManager = NULL;
 GLuint g_program = NULL;
@@ -72,8 +76,12 @@ void release() {
 }
 
 void createEngine() {
-    slCreateEngine(&engineObject, 0, NULL, 0, NULL, NULL);
+    // 创建引擎
+    SLEngineOption engine_options[] = {{(SLuint32) SL_ENGINEOPTION_THREADSAFE, (SLuint32) SL_BOOLEAN_TRUE}};
+    slCreateEngine(&engineObject, ARRAY_LEN(engine_options), engine_options, 0, NULL, NULL);
+    // 初始化引擎
     (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
+    // 获取这个引擎对象的方法接口
     (*engineObject)->GetInterface(engineObject, SL_IID_ENGINE, &engineEngine);
 }
 
@@ -220,6 +228,7 @@ Java_com_cain_videotemp_video_FFVideoPlayer_render(JNIEnv *env, jobject thiz, js
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_audio_OpenSLEsDelegate_playByAssets(JNIEnv *env, jobject thiz, jobject asset_manager, jstring file_name) {
+    // 先释放资源
     release();
     const char *utf8 = env->GetStringUTFChars(file_name, NULL);
     // use asset manager to open asset by filename
@@ -230,20 +239,16 @@ Java_com_cain_videotemp_audio_OpenSLEsDelegate_playByAssets(JNIEnv *env, jobject
     off_t start, length;
     int fd = AAsset_openFileDescriptor(asset, &start, &length);
     AAsset_close(asset);
-    SLresult result;
-    //第一步，创建引擎
+    //第一步，创建引擎，并初始化获取接口方法
     createEngine();
-    //第二步，创建混音器
+    //第二步，创建混音器，并初始化获取接口方法
     const SLInterfaceID mids[1] = {SL_IID_ENVIRONMENTALREVERB};
     const SLboolean mreq[1] = {SL_BOOLEAN_FALSE};
-    result = (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 1, mids, mreq);
-    (void) result;
-    result = (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
-    (void) result;
-    result = (*outputMixObject)->GetInterface(outputMixObject, SL_IID_ENVIRONMENTALREVERB, &outputMixEnvironmentalReverb);
+    (*engineEngine)->CreateOutputMix(engineEngine, &outputMixObject, 1, mids, mreq);
+    (*outputMixObject)->Realize(outputMixObject, SL_BOOLEAN_FALSE);
+    SLresult result = (*outputMixObject)->GetInterface(outputMixObject, SL_IID_ENVIRONMENTALREVERB, &outputMixEnvironmentalReverb);
     if (SL_RESULT_SUCCESS == result) {
-        result = (*outputMixEnvironmentalReverb)->SetEnvironmentalReverbProperties(outputMixEnvironmentalReverb, &reverbSettings);
-        (void) result;
+        (*outputMixEnvironmentalReverb)->SetEnvironmentalReverbProperties(outputMixEnvironmentalReverb, &reverbSettings);
     }
     //第三步，设置播放器参数和创建播放器
     // 1、配置 audio source
@@ -256,21 +261,16 @@ Java_com_cain_videotemp_audio_OpenSLEsDelegate_playByAssets(JNIEnv *env, jobject
     // 创建播放器
     const SLInterfaceID ids[3] = {SL_IID_SEEK, SL_IID_MUTESOLO, SL_IID_VOLUME};
     const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
-    result = (*engineEngine)->CreateAudioPlayer(engineEngine, &fdPlayerObject, &audioSrc, &audioSnk, 3, ids, req);
-    (void) result;
+    (*engineEngine)->CreateAudioPlayer(engineEngine, &fdPlayerObject, &audioSrc, &audioSnk, 3, ids, req);
     // 实现播放器
-    result = (*fdPlayerObject)->Realize(fdPlayerObject, SL_BOOLEAN_FALSE);
-    (void) result;
+    (*fdPlayerObject)->Realize(fdPlayerObject, SL_BOOLEAN_FALSE);
     // 得到播放器接口
-    result = (*fdPlayerObject)->GetInterface(fdPlayerObject, SL_IID_PLAY, &fdPlayerPlay);
-    (void) result;
+    (*fdPlayerObject)->GetInterface(fdPlayerObject, SL_IID_PLAY, &fdPlayerPlay);
     // 得到声音控制接口
-    result = (*fdPlayerObject)->GetInterface(fdPlayerObject, SL_IID_VOLUME, &fdPlayerVolume);
-    (void) result;
+    (*fdPlayerObject)->GetInterface(fdPlayerObject, SL_IID_VOLUME, &fdPlayerVolume);
     // 设置播放状态
     if (NULL != fdPlayerPlay) {
-        result = (*fdPlayerPlay)->SetPlayState(fdPlayerPlay, SL_PLAYSTATE_PLAYING);
-        (void) result;
+        (*fdPlayerPlay)->SetPlayState(fdPlayerPlay, SL_PLAYSTATE_PLAYING);
     }
     //设置播放音量 （100 * -50：静音 ）
     (*fdPlayerVolume)->SetVolumeLevel(fdPlayerVolume, 20 * -50);
@@ -314,4 +314,18 @@ Java_com_cain_videotemp_pic_opengl_NativeRender_registerAssetManager(JNIEnv *env
     if (asset_manager) {
         g_pAssetManager = AAssetManager_fromJava(env, asset_manager);
     }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cain_videotemp_audio_OpenSLEsDelegate_pause(JNIEnv *env, jobject thiz) {
+    if (fdPlayerPlay != NULL) {
+        (*fdPlayerPlay)->SetPlayState(fdPlayerPlay, SL_PLAYSTATE_PAUSED);
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cain_videotemp_audio_OpenSLEsDelegate_release(JNIEnv *env, jobject thiz) {
+    release();
 }
