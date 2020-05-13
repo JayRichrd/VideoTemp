@@ -45,7 +45,7 @@ SLPlayItf fdPlayerPlay = NULL;
 SLVolumeItf fdPlayerVolume = NULL;
 
 GLuint g_program = NULL;
-GLint g_position_handle = NULL;
+GLint g_position = NULL;
 
 void release();
 
@@ -285,19 +285,21 @@ Java_com_cain_videotemp_pic_opengl_NativeRender_glDraw(JNIEnv *env, jobject thiz
             -0.5f, -0.5f, 0.0f, // 第二个点（x, y, z）
             0.5f, -0.5f, 0.0f // 第三个点（x, y, z）
     };
-    glClear(GL_COLOR_BUFFER_BIT); // clear color buffer
+    // clear color buffer
+    glClear(GL_COLOR_BUFFER_BIT); 
     // 1. 选择使用的程序
     glUseProgram(g_program);
     // 2. 加载顶点数据
-    glVertexAttribPointer(g_position_handle, vertexCount, GL_FLOAT, GL_FALSE, 3 * 4, vertices);
-    glEnableVertexAttribArray(g_position_handle);
+    glVertexAttribPointer(g_position, vertexCount, GL_FLOAT, GL_FALSE, 3 * 4, vertices);
+    glEnableVertexAttribArray(g_position);
     // 3. 绘制
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_NativeRender_glResize(JNIEnv *env, jobject thiz, jint width, jint height) {
-    glViewport(0, 0, width, height); // 设置视距窗口
+    // 设置视距窗口
+    glViewport(0, 0, width, height); 
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -308,11 +310,13 @@ Java_com_cain_videotemp_pic_opengl_NativeRender_glInit(JNIEnv *env, jobject thiz
     g_program = create_program(vertexShaderSource, fragmentShaderSource);
     if (g_program == GL_NONE) {
         LOGE("gl init failed!");
+        return;
     }
     // vPosition 是在 'vertex.vsh' 文件中定义的
-    g_position_handle =glGetAttribLocation(g_program, "vPosition");
-    LOGD("g_position_handle: %d", g_position_handle);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // 背景颜色设置为黑色 RGBA (range: 0.0 ~ 1.0)
+    g_position =glGetAttribLocation(g_program, "vPosition");
+    LOGD("g_position: %d", g_position);
+    // 背景颜色设置为黑色 RGBA (range: 0.0 ~ 1.0)
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
 }
 
 extern "C"
