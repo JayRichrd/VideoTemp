@@ -18,6 +18,7 @@ class SimpleRenderActivity : AppCompatActivity() {
         const val TYPE_RENDER = "render_type"
         const val TYPE_JAVA_RENDER = 1
         const val TYPE_JNI_RENDER = 2
+        const val TYPE_CUSTOM_OPEN_GL = 3
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,6 +35,10 @@ class SimpleRenderActivity : AppCompatActivity() {
             }
             TYPE_JNI_RENDER -> {
                 getJniRender()
+            }
+            TYPE_CUSTOM_OPEN_GL -> {
+                Log.i(TAG, "custom open gl")
+                getJavaRender()
             }
             else -> {
                 Log.w(TAG, "onCreate# nothing to matched!")

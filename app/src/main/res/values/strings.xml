@@ -11,4 +11,5 @@
     <string name="open_sl_stop">open_sl/stop</string>
     <string name="open_gl_java_pic">open_gl_java/pic</string>
     <string name="open_gl_jni_pic">open_gl_jni/pic</string>
+    <string name="custom_open_gl">custom_open_gl</string>
 </resources>
