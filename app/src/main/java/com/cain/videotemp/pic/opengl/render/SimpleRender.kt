@@ -1,7 +1,9 @@
-package com.cain.videotemp.pic.opengl
+package com.cain.videotemp.pic.opengl.render
 
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
+import com.cain.videotemp.pic.opengl.BitmapDrawer
+import com.cain.videotemp.pic.opengl.OpenGLTools
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 

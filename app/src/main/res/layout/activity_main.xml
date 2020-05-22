@@ -59,11 +59,11 @@
             android:text="@string/open_gl_jni_pic" />
 
         <Button
-            android:id="@+id/btn_custom_open_gl"
+            android:id="@+id/btn_opengl_custom_context"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="@string/custom_open_gl" />
+            android:text="@string/open_gl_custom_context" />
     </LinearLayout>
 
 </ScrollView>

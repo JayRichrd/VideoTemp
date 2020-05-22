@@ -5,46 +5,63 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.opengl.GLSurfaceView
 import android.os.Bundle
-import android.util.Log
+import android.os.Handler
+import android.os.HandlerThread
+import android.view.SurfaceHolder
+import android.view.SurfaceView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.cain.videotemp.pic.opengl.BitmapDrawer
-import com.cain.videotemp.pic.opengl.NativeRender
-import com.cain.videotemp.pic.opengl.SimpleRender
+import com.cain.videotemp.pic.opengl.render.EGLRender
+import com.cain.videotemp.pic.opengl.render.NativeRender
+import com.cain.videotemp.pic.opengl.render.SimpleRender
 
-class SimpleRenderActivity : AppCompatActivity() {
+class SimpleRenderActivity : AppCompatActivity(), SurfaceHolder.Callback {
     companion object {
         const val TAG = "SimpleRenderActivity"
         const val TYPE_RENDER = "render_type"
         const val TYPE_JAVA_RENDER = 1
         const val TYPE_JNI_RENDER = 2
-        const val TYPE_CUSTOM_OPEN_GL = 3
+        const val TYPE_CUSTOM_CONTEXT = 3
     }
+
+    lateinit var eglRender: EGLRender
+    val renderThread by lazy { HandlerThread("RenderThread") }
+    lateinit var renderHandler: Handler
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val glSurfaceView = GLSurfaceView(this)
         //setContentView(R.layout.activity_simple_render)
         (getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)?.let {
             Toast.makeText(this, "OpenGL ${it.deviceConfigurationInfo.glEsVersion}", Toast.LENGTH_LONG).show()
         }
 
-        val render: GLSurfaceView.Renderer = when (intent.getIntExtra(TYPE_RENDER, TYPE_JAVA_RENDER)) {
+        when (intent.getIntExtra(TYPE_RENDER, TYPE_JAVA_RENDER)) {
             TYPE_JAVA_RENDER -> {
-                getJavaRender()
+                customRenderMode(getJavaRender())
             }
             TYPE_JNI_RENDER -> {
-                getJniRender()
+                customRenderMode(getJniRender())
             }
-            TYPE_CUSTOM_OPEN_GL -> {
-                Log.i(TAG, "custom open gl")
-                getJavaRender()
+            TYPE_CUSTOM_CONTEXT -> {
+                customOpenGLContext()
             }
             else -> {
-                Log.w(TAG, "onCreate# nothing to matched!")
-                getJavaRender()
+                customRenderMode(getJavaRender())
             }
         }
+    }
+
+    private fun customOpenGLContext() {
+        eglRender = EGLRender()
+        eglRender.nativeInit()
+        val surfaceView = SurfaceView(this)
+        surfaceView.holder.addCallback(this)
+        setContentView(surfaceView)
+    }
+
+    private fun customRenderMode(render: GLSurfaceView.Renderer) {
+        val glSurfaceView = GLSurfaceView(this)
         glSurfaceView.setEGLContextClientVersion(3)
         glSurfaceView.setRenderer(render)
         glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
@@ -56,4 +73,24 @@ class SimpleRenderActivity : AppCompatActivity() {
     }
 
     private fun getJniRender(): GLSurfaceView.Renderer = NativeRender(assets)
+
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        renderThread.start()
+        renderHandler = Handler(renderThread.looper)
+        renderHandler.post {
+            onSurfaceCreated(holder)
+        }
+    }
+
+    private fun onSurfaceCreated(holder: SurfaceHolder) {
+
+    }
+
+    override fun surfaceDestroyed(holder: SurfaceHolder?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun surfaceCreated(holder: SurfaceHolder?) {
+        TODO("Not yet implemented")
+    }
 }

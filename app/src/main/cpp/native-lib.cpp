@@ -45,7 +45,7 @@ SLPlayItf fdPlayerPlay = NULL;
 SLVolumeItf fdPlayerVolume = NULL;
 
 GLuint g_program = NULL;
-GLint g_position_handle = NULL;
+GLint g_position = NULL;
 
 void release();
 
@@ -277,7 +277,7 @@ Java_com_cain_videotemp_audio_OpenSLEsDelegate_playByAssets(JNIEnv *env, jobject
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_cain_videotemp_pic_opengl_NativeRender_glDraw(JNIEnv *env, jobject thiz) {
+Java_com_cain_videotemp_pic_opengl_render_NativeRender_glDraw(JNIEnv *env, jobject thiz) {
     GLint vertexCount = 3;
     // OpenGL的世界坐标系是 [-1, -1, 1, 1]
     GLfloat vertices[] = {
@@ -285,34 +285,38 @@ Java_com_cain_videotemp_pic_opengl_NativeRender_glDraw(JNIEnv *env, jobject thiz
             -0.5f, -0.5f, 0.0f, // 第二个点（x, y, z）
             0.5f, -0.5f, 0.0f // 第三个点（x, y, z）
     };
-    glClear(GL_COLOR_BUFFER_BIT); // clear color buffer
+    // clear color buffer
+    glClear(GL_COLOR_BUFFER_BIT); 
     // 1. 选择使用的程序
     glUseProgram(g_program);
     // 2. 加载顶点数据
-    glVertexAttribPointer(g_position_handle, vertexCount, GL_FLOAT, GL_FALSE, 3 * 4, vertices);
-    glEnableVertexAttribArray(g_position_handle);
+    glVertexAttribPointer(g_position, vertexCount, GL_FLOAT, GL_FALSE, 3 * 4, vertices);
+    glEnableVertexAttribArray(g_position);
     // 3. 绘制
     glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_cain_videotemp_pic_opengl_NativeRender_glResize(JNIEnv *env, jobject thiz, jint width, jint height) {
-    glViewport(0, 0, width, height); // 设置视距窗口
+Java_com_cain_videotemp_pic_opengl_render_NativeRender_glResize(JNIEnv *env, jobject thiz, jint width, jint height) {
+    // 设置视距窗口
+    glViewport(0, 0, width, height); 
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_cain_videotemp_pic_opengl_NativeRender_glInit(JNIEnv *env, jobject thiz,jobject asset_manager) {
+Java_com_cain_videotemp_pic_opengl_render_NativeRender_glInit(JNIEnv *env, jobject thiz,jobject asset_manager) {
     AAssetManager *am = AAssetManager_fromJava(env, asset_manager);
     char *vertexShaderSource = read_asset_file("vertex.vsh", am);
     char *fragmentShaderSource = read_asset_file("fragment.fsh", am);
     g_program = create_program(vertexShaderSource, fragmentShaderSource);
     if (g_program == GL_NONE) {
         LOGE("gl init failed!");
+        return;
     }
     // vPosition 是在 'vertex.vsh' 文件中定义的
-    g_position_handle =glGetAttribLocation(g_program, "vPosition");
-    LOGD("g_position_handle: %d", g_position_handle);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // 背景颜色设置为黑色 RGBA (range: 0.0 ~ 1.0)
+    g_position =glGetAttribLocation(g_program, "vPosition");
+    LOGD("g_position: %d", g_position);
+    // 背景颜色设置为黑色 RGBA (range: 0.0 ~ 1.0)
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
 }
 
 extern "C"
@@ -327,4 +331,31 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_cain_videotemp_audio_OpenSLEsDelegate_release(JNIEnv *env, jobject thiz) {
     release();
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeInit(JNIEnv *env, jobject thiz) {
+    // TODO: implement nativeInit()
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeRelease(JNIEnv *env, jobject thiz) {
+    // TODO: implement nativeRelease()
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceCreated(JNIEnv *env, jobject thiz, jobject surface) {
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceDestroyed(JNIEnv *env, jobject thiz) {
+    // TODO: implement onSurfaceDestroyed()
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceCreated4Size(JNIEnv *env, jobject thiz, jint width, jint height) {
+    // TODO: implement onSurfaceCreated4Size()
 }

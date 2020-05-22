@@ -1,4 +1,4 @@
-package com.cain.videotemp.pic.opengl
+package com.cain.videotemp.pic.opengl.render
 
 import android.content.res.AssetManager
 import android.opengl.GLSurfaceView

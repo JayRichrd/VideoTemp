@@ -29,7 +29,8 @@ GLuint load_shader(GLenum type, const char *shader_source) {
             LOGE("Error compiling shader: %s", log);
             free(log);
         }
-        glDeleteShader(shader); // delete shader
+        // delete shader
+        glDeleteShader(shader);
         return GL_NONE;
     }
     return shader;
@@ -43,7 +44,7 @@ GLuint create_program(const char *vertex_source, const char *fragment_source) {
         return GL_NONE;
     }
     GLuint fragmentShader = load_shader(GL_FRAGMENT_SHADER, fragment_source);
-    if (vertexShader == GL_NONE) {
+    if (fragmentShader == GL_NONE) {
         LOGE("load fragment shader failed! ");
         return GL_NONE;
     }
