@@ -277,7 +277,7 @@ Java_com_cain_videotemp_audio_OpenSLEsDelegate_playByAssets(JNIEnv *env, jobject
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_cain_videotemp_pic_opengl_NativeRender_glDraw(JNIEnv *env, jobject thiz) {
+Java_com_cain_videotemp_pic_opengl_render_NativeRender_glDraw(JNIEnv *env, jobject thiz) {
     GLint vertexCount = 3;
     // OpenGL的世界坐标系是 [-1, -1, 1, 1]
     GLfloat vertices[] = {
@@ -297,13 +297,13 @@ Java_com_cain_videotemp_pic_opengl_NativeRender_glDraw(JNIEnv *env, jobject thiz
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_cain_videotemp_pic_opengl_NativeRender_glResize(JNIEnv *env, jobject thiz, jint width, jint height) {
+Java_com_cain_videotemp_pic_opengl_render_NativeRender_glResize(JNIEnv *env, jobject thiz, jint width, jint height) {
     // 设置视距窗口
     glViewport(0, 0, width, height); 
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_cain_videotemp_pic_opengl_NativeRender_glInit(JNIEnv *env, jobject thiz,jobject asset_manager) {
+Java_com_cain_videotemp_pic_opengl_render_NativeRender_glInit(JNIEnv *env, jobject thiz,jobject asset_manager) {
     AAssetManager *am = AAssetManager_fromJava(env, asset_manager);
     char *vertexShaderSource = read_asset_file("vertex.vsh", am);
     char *fragmentShaderSource = read_asset_file("fragment.fsh", am);
@@ -331,4 +331,31 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_cain_videotemp_audio_OpenSLEsDelegate_release(JNIEnv *env, jobject thiz) {
     release();
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeInit(JNIEnv *env, jobject thiz) {
+    // TODO: implement nativeInit()
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeRelease(JNIEnv *env, jobject thiz) {
+    // TODO: implement nativeRelease()
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceCreated(JNIEnv *env, jobject thiz, jobject surface) {
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceDestroyed(JNIEnv *env, jobject thiz) {
+    // TODO: implement onSurfaceDestroyed()
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceCreated4Size(JNIEnv *env, jobject thiz, jint width, jint height) {
+    // TODO: implement onSurfaceCreated4Size()
 }
