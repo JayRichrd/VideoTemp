@@ -3,6 +3,7 @@ package com.cain.videotemp
 import android.app.ActivityManager
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.opengl.EGL14
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.os.Handler
@@ -12,6 +13,8 @@ import android.view.SurfaceView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.cain.videotemp.pic.opengl.BitmapDrawer
+import com.cain.videotemp.pic.opengl.EglCore
+import com.cain.videotemp.pic.opengl.WindowSurface
 import com.cain.videotemp.pic.opengl.render.EGLRender
 import com.cain.videotemp.pic.opengl.render.NativeRender
 import com.cain.videotemp.pic.opengl.render.SimpleRender
@@ -26,6 +29,9 @@ class SimpleRenderActivity : AppCompatActivity(), SurfaceHolder.Callback {
     }
 
     lateinit var eglRender: EGLRender
+
+    lateinit var mEglCore: EglCore
+    lateinit var mDisplaySurface: WindowSurface
     val renderThread by lazy { HandlerThread("RenderThread") }
     lateinit var renderHandler: Handler
 
@@ -83,7 +89,9 @@ class SimpleRenderActivity : AppCompatActivity(), SurfaceHolder.Callback {
     }
 
     private fun onSurfaceCreated(holder: SurfaceHolder) {
-
+        mEglCore = EglCore(EGL14.EGL_NO_CONTEXT,EglCore.FLAG_RECORDABLE)
+        mDisplaySurface = WindowSurface(mEglCore, holder.getSurface(), false)
+        mDisplaySurface.makeCurrent()
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder?) {

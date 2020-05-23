@@ -1,7 +1,9 @@
 package com.cain.videotemp.pic.opengl
 
+import android.graphics.SurfaceTexture
 import android.opengl.*
 import android.util.Log
+import android.view.Surface
 
 /**
  * @author : jiangyu
@@ -81,14 +83,14 @@ class EglCore(sharedContext: EGLContext, flags: Int) {
         // doesn't really help.  It can also lead to a huge performance hit on glReadPixels()
         // when reading into a GL_RGBA buffer.
         val attribList = intArrayOf(
-                EGL14.EGL_RED_SIZE, 8,
-                EGL14.EGL_GREEN_SIZE, 8,
-                EGL14.EGL_BLUE_SIZE, 8,
-                EGL14.EGL_ALPHA_SIZE, 8,  //EGL14.EGL_DEPTH_SIZE, 16,
-                //EGL14.EGL_STENCIL_SIZE, 8,
-                EGL14.EGL_RENDERABLE_TYPE, renderableType,
-                EGL14.EGL_NONE, 0,  // placeholder for recordable [@-3]
-                EGL14.EGL_NONE
+            EGL14.EGL_RED_SIZE, 8,
+            EGL14.EGL_GREEN_SIZE, 8,
+            EGL14.EGL_BLUE_SIZE, 8,
+            EGL14.EGL_ALPHA_SIZE, 8,  //EGL14.EGL_DEPTH_SIZE, 16,
+            //EGL14.EGL_STENCIL_SIZE, 8,
+            EGL14.EGL_RENDERABLE_TYPE, renderableType,
+            EGL14.EGL_NONE, 0,  // placeholder for recordable [@-3]
+            EGL14.EGL_NONE
         )
 
         if (flags and FLAG_RECORDABLE != 0) {
@@ -122,4 +124,78 @@ class EglCore(sharedContext: EGLContext, flags: Int) {
     fun releaseSurface(eglSurface: EGLSurface): Unit {
         EGL14.eglDestroySurface(mEGLDisplay, eglSurface)
     }
+
+    protected fun finalize() {
+        if (mEGLDisplay !== EGL14.EGL_NO_DISPLAY) {
+            // We're limited here -- finalizers don't run on the thread that holds
+            // the EGL state, so if a surface or context is still current on another
+            // thread we can't fully release it here.  Exceptions thrown from here
+            // are quietly discarded.  Complain in the log file.
+            Log.w(TAG, "WARNING: EglCore was not explicitly released -- state may be leaked")
+            release()
+        }
+    }
+
+    fun createWindowSurface(surface: Any): EGLSurface {
+        if (surface !is Surface && surface !is SurfaceTexture) {
+            throw java.lang.RuntimeException("invalid surface: $surface")
+        }
+
+        // Create a window surface, and attach it to the Surface we received.
+        val surfaceAttribs = intArrayOf(EGL14.EGL_NONE)
+        val eglSurface = EGL14.eglCreateWindowSurface(mEGLDisplay, mEGLConfig, surface, surfaceAttribs, 0)
+        checkEglError("eglCreateWindowSurface")
+        if (eglSurface == null) {
+            throw java.lang.RuntimeException("surface was null")
+        }
+        return eglSurface
+    }
+
+    fun createOffscreenSurface(width: Int, height: Int): EGLSurface {
+        val surfaceAttribs = intArrayOf(
+            EGL14.EGL_WIDTH, width,
+            EGL14.EGL_HEIGHT, height,
+            EGL14.EGL_NONE)
+        val eglSurface = EGL14.eglCreatePbufferSurface(mEGLDisplay, mEGLConfig, surfaceAttribs, 0)
+        checkEglError("eglCreatePbufferSurface")
+        if (eglSurface == null) {
+            throw java.lang.RuntimeException("surface was null")
+        }
+        return eglSurface
+    }
+
+    fun makeCurrent(eglSurface: EGLSurface): Unit {
+        if (mEGLDisplay === EGL14.EGL_NO_DISPLAY) {
+            // called makeCurrent() before create?
+            Log.d(TAG, "NOTE: makeCurrent w/o display")
+        }
+        if (!EGL14.eglMakeCurrent(mEGLDisplay, eglSurface, eglSurface, mEGLContext)) {
+            throw RuntimeException("eglMakeCurrent failed")
+        }
+    }
+
+    fun makeCurrent(drawSurface: EGLSurface, readSurface: EGLSurface): Unit {
+        if (mEGLDisplay === EGL14.EGL_NO_DISPLAY) {
+            // called makeCurrent() before create?
+            Log.d(TAG, "NOTE: makeCurrent w/o display")
+        }
+        if (!EGL14.eglMakeCurrent(mEGLDisplay, drawSurface, readSurface, mEGLContext)) {
+            throw RuntimeException("eglMakeCurrent(draw,read) failed")
+        }
+    }
+
+    fun swapBuffers(eglSurface: EGLSurface): Boolean = EGL14.eglSwapBuffers(mEGLDisplay, eglSurface)
+
+    fun setPresentationTime(eglSurface: EGLSurface, nsecs: Long): Unit {
+        EGLExt.eglPresentationTimeANDROID(mEGLDisplay, eglSurface, nsecs)
+    }
+
+    fun isCurrent(eglSurface: EGLSurface): Boolean = mEGLContext == EGL14.eglGetCurrentContext() && eglSurface == EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW)
+
+    fun querySurface(eglSurface: EGLSurface, what: Int): Int {
+        val value = IntArray(1)
+        EGL14.eglQuerySurface(mEGLDisplay, eglSurface, what, value, 0)
+        return value[0]
+    }
+
 }
