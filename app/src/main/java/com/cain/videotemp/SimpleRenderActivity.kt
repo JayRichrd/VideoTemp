@@ -35,16 +35,16 @@ class SimpleRenderActivity : AppCompatActivity(), SurfaceHolder.Callback, OnFram
         const val TYPE_CUSTOM_CONTEXT = 3
     }
 
-    lateinit var mRender: EGLRender
-    private val mMatrix = FloatArray(16)
-    lateinit var mEglCore: EglCore
-    lateinit var mDisplaySurface: WindowSurface
-    lateinit var mOESInputFilter: OESInputFilter
-    private var mInputTextureId = 0
-    lateinit var mSurfaceTexture: SurfaceTexture
-    lateinit var mSurface: Surface
+    lateinit var eglRender: EGLRender
+    private val matrix = FloatArray(16)
+    lateinit var eglCore: EglCore
+    lateinit var windowSurface: WindowSurface
+    lateinit var oESInputFilter: OESInputFilter
+    private var inputTextureId = 0
+    lateinit var surfaceTexture: SurfaceTexture
+    lateinit var surface: Surface
     val renderThread by lazy { HandlerThread("RenderThread") }
-    lateinit var mRenderHandler: Handler
+    lateinit var renderHandler: Handler
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,13 +70,14 @@ class SimpleRenderActivity : AppCompatActivity(), SurfaceHolder.Callback, OnFram
     }
 
     override fun onDestroy() {
+        Log.i(TAG, "onDestroy#")
         super.onDestroy()
-        mRender.nativeRelease()
+        eglRender.nativeRelease()
     }
 
     private fun customOpenGLContext() {
-        mRender = EGLRender()
-        mRender.nativeInit()
+        eglRender = EGLRender()
+        eglRender.nativeInit()
         val surfaceView = SurfaceView(this)
         surfaceView.holder.addCallback(this)
         setContentView(surfaceView)
@@ -97,94 +98,97 @@ class SimpleRenderActivity : AppCompatActivity(), SurfaceHolder.Callback, OnFram
     private fun getJniRender(): GLSurfaceView.Renderer = NativeRender(assets)
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        Log.i(TAG, "surfaceChanged# format: $format, width: $width, height: $height")
         internalSurfaceChanged(width, height)
     }
 
     private fun internalSurfaceChanged(width: Int, height: Int) {
-        mRenderHandler.post({ onSurfaceChanged(width, height) })
+        renderHandler.post({ onSurfaceChanged(width, height) })
     }
 
     private fun onSurfaceChanged(width: Int, height: Int) {
-        mOESInputFilter.updateTextureBuffer()
-        mRender.onSurfaceChanged(width, height)
+        oESInputFilter.updateTextureBuffer()
+        eglRender.onSurfaceChanged(width, height)
     }
 
     private fun onSurfaceCreated(holder: SurfaceHolder) {
-        mEglCore = EglCore(EGL14.EGL_NO_CONTEXT, EglCore.FLAG_RECORDABLE)
-        mDisplaySurface = WindowSurface(mEglCore, holder.getSurface(), false)
-        mDisplaySurface.makeCurrent()
-        mOESInputFilter = OESInputFilter(this)
-        mOESInputFilter.onInputSizeChanged(1080, 1920)
-        mOESInputFilter.onDisplayChanged(1080, 1920)
-        mInputTextureId = OpenGLTools.createTextureOES()
-        mSurfaceTexture = SurfaceTexture(mInputTextureId)
-        mSurfaceTexture.setDefaultBufferSize(1090, 1920)
-        mSurfaceTexture.setOnFrameAvailableListener(this)
-        mSurface = Surface(mSurfaceTexture)
-        mRender.onSurfaceCreated(mSurface)
+        eglCore = EglCore(EGL14.EGL_NO_CONTEXT, EglCore.FLAG_RECORDABLE)
+        windowSurface = WindowSurface(eglCore, holder.getSurface(), false)
+        windowSurface.makeCurrent()
+        oESInputFilter = OESInputFilter(this)
+        oESInputFilter.onInputSizeChanged(1080, 1920)
+        oESInputFilter.onDisplayChanged(1080, 1920)
+        inputTextureId = OpenGLTools.createTextureOES()
+        surfaceTexture = SurfaceTexture(inputTextureId)
+        surfaceTexture.setDefaultBufferSize(1090, 1920)
+        surfaceTexture.setOnFrameAvailableListener(this)
+        surface = Surface(surfaceTexture)
+        eglRender.onSurfaceCreated(surface)
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
+        Log.i(TAG, "surfaceDestroyed# holder: $holder")
         internalSurfaceDestroyed()
     }
 
     private fun internalSurfaceDestroyed() {
-        mRenderHandler.post { onSurfaceDestroyed() }
+        renderHandler.post { onSurfaceDestroyed() }
     }
 
     private fun onSurfaceDestroyed() {
-        if (mOESInputFilter != null) {
-            mOESInputFilter.release()
+        if (oESInputFilter != null) {
+            oESInputFilter.release()
 //            mOESInputFilter = null
         }
-        if (mSurfaceTexture != null) {
-            mSurfaceTexture.release()
+        if (surfaceTexture != null) {
+            surfaceTexture.release()
 //            mSurfaceTexture = null
         }
 
-        if (mDisplaySurface != null) {
-            mDisplaySurface.release()
+        if (windowSurface != null) {
+            windowSurface.release()
 //            mDisplaySurface = null
         }
 
-        if (mEglCore != null) {
-            mEglCore.release()
+        if (eglCore != null) {
+            eglCore.release()
 //            mEglCore = null
         }
 
-        mRender.onSurfaceDestroyed()
+        eglRender.onSurfaceDestroyed()
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
+        Log.i(TAG, "surfaceCreated# holder: $holder")
         renderThread.start()
-        mRenderHandler = Handler(renderThread.looper)
-        mRenderHandler.post {
+        renderHandler = Handler(renderThread.looper)
+        renderHandler.post {
             onSurfaceCreated(holder)
         }
     }
 
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture) {
+        Log.d(TAG, "onFrameAvailable# surfaceTexture: $surfaceTexture, timestamp: ${surfaceTexture.timestamp}")
         requestRender()
     }
 
     private fun requestRender() {
-        Log.d(TAG, "requestRender: ")
-        mRenderHandler.post { onDrawFrame() }
+        renderHandler.post { onDrawFrame() }
     }
 
     private fun onDrawFrame() {
-        if (mSurfaceTexture == null) {
+        if (surfaceTexture == null) {
             return
         }
-        mSurfaceTexture.updateTexImage()
-        mDisplaySurface.makeCurrent()
-        mSurfaceTexture.getTransformMatrix(mMatrix)
-        if (mOESInputFilter != null) {
-            mOESInputFilter.setTextureTransformMatirx(mMatrix)
+        surfaceTexture.updateTexImage()
+        windowSurface.makeCurrent()
+        surfaceTexture.getTransformMatrix(matrix)
+        if (oESInputFilter != null) {
+            oESInputFilter.setTextureTransformMatirx(matrix)
             // 绘制渲染
             GLES30.glViewport(0, 0, 1080, 1920)
-            mOESInputFilter.drawFrame(mInputTextureId)
+            oESInputFilter.drawFrame(inputTextureId)
         }
-        mDisplaySurface.swapBuffers()
+        windowSurface.swapBuffers()
     }
 }

@@ -354,7 +354,8 @@ Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeRelease(JNIEnv *env, j
     if (mWindow) {
         ANativeWindow_release(mWindow);
         mWindow = NULL;
-    }}
+    }
+}
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -374,11 +375,13 @@ JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceDestroyed(JNIEnv *env, jobject thiz) {
     if (mLooper) {
         mLooper->postMessage(kMsgSurfaceDestroyed);
-    }}
+    }
+}
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceChanged(JNIEnv *env, jobject thiz, jint width, jint height) {
     if (mLooper) {
         mLooper->postMessage(kMsgSurfaceChanged, width, height);
-    }}
+    }
+}

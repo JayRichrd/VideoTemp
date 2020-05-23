@@ -4,6 +4,7 @@ import android.content.Context
 import android.opengl.GLES11Ext
 import android.opengl.GLES30
 import android.opengl.Matrix
+import android.util.Log
 import com.cain.videotemp.pic.opengl.OpenGLTools
 
 /**
@@ -13,6 +14,7 @@ import com.cain.videotemp.pic.opengl.OpenGLTools
  */
 class OESInputFilter(ctx: Context, vertexShader: String, fragmentShader: String) : BaseImageFilter(ctx, vertexShader, fragmentShader) {
     companion object {
+        const val TAG = "OESInputFilter"
         const val VERTEX_SHADER = "uniform mat4 uMVPMatrix;                               \n" +
                 "uniform mat4 uTexMatrix;                               \n" +
                 "attribute vec4 aPosition;                              \n" +
@@ -37,30 +39,34 @@ class OESInputFilter(ctx: Context, vertexShader: String, fragmentShader: String)
     }
 
     private var muTexMatrixLoc = 0
-    lateinit var mTextureMatrix: FloatArray
+    private lateinit var mTextureMatrix: FloatArray
 
-    constructor(ctx:Context):this(ctx,VERTEX_SHADER,FRAGMENT_SHADER_OES)
+    constructor(ctx: Context) : this(ctx, VERTEX_SHADER, FRAGMENT_SHADER_OES)
+
     init {
-        muTexMatrixLoc = GLES30.glGetUniformLocation(mProgramHandle, "uTexMatrix")
+        muTexMatrixLoc = GLES30.glGetUniformLocation(programHandle, "uTexMatrix")
         // 视图矩阵
         Matrix.setLookAtM(mViewMatrix, 0, 0f, 0f, -1f, 0f, 0f, 0f, 0f, 1f, 0f)
     }
 
     override fun onInputSizeChanged(width: Int, height: Int) {
         super.onInputSizeChanged(width, height)
+        Log.i(TAG, "onInputSizeChanged# width: $width, height: $height")
         val aspect = width.toFloat() / height // 计算宽高比
         Matrix.perspectiveM(mProjectionMatrix, 0, 60f, aspect, 2f, 10f)
     }
 
     override fun getTextureType(): Int {
-        return return GLES11Ext.GL_TEXTURE_EXTERNAL_OES
+        return GLES11Ext.GL_TEXTURE_EXTERNAL_OES
     }
 
     override fun onDrawArraysBegin() {
+        Log.i(TAG, "onDrawArraysBegin# ")
         GLES30.glUniformMatrix4fv(muTexMatrixLoc, 1, false, mTextureMatrix, 0)
     }
 
     fun updateTextureBuffer() {
+        Log.i(TAG, "updateTextureBuffer# ")
         mTextureBuffer = OpenGLTools.getTextureBuffer()
     }
 
@@ -69,6 +75,7 @@ class OESInputFilter(ctx: Context, vertexShader: String, fragmentShader: String)
      * @param texMatrix
      */
     fun setTextureTransformMatirx(texMatrix: FloatArray) {
+        Log.i(TAG, "setTextureTransformMatirx# texMatrix: $texMatrix")
         mTextureMatrix = texMatrix
     }
 }

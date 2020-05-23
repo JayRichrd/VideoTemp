@@ -14,27 +14,25 @@ Triangle::~Triangle() {
 }
 
 int Triangle::init() {
-    char vertexShader[] =
-            "#version 300 es\n"
-                    "layout(location = 0) in vec4 a_position;\n"
-                    "layout(location = 1) in vec4 a_color;\n"
-                    "out vec4 v_color;"
-                    "void main()\n"
-                    "{\n"
-                    "   gl_Position = a_position;\n"
-                    "   v_color = a_color;\n"
-                    "}\n";
+    char vertexShader[] = "#version 300 es\n"
+                          "layout(location = 0) in vec4 a_position;\n"
+                          "layout(location = 1) in vec4 a_color;\n"
+                          "out vec4 v_color;"
+                          "void main()\n"
+                          "{\n"
+                          "   gl_Position = a_position;\n"
+                          "   v_color = a_color;\n"
+                          "}\n";
 
-    char fragmentShader[] =
-            "#version 300 es\n"
-                    "precision mediump float;\n"
-                    "in vec4 v_color;\n"
-                    "out vec4 fragColor;\n"
-                    "void main()\n"
-                    "{\n"
-//                    "   fragColor = vec4 ( 1.0, 0.0, 0.0, 1.0 );\n"
-                    "   fragColor = v_color;\n"
-                    "}\n";
+    char fragmentShader[] = "#version 300 es\n"
+                            "precision mediump float;\n"
+                            "in vec4 v_color;\n"
+                            "out vec4 fragColor;\n"
+                            "void main()\n"
+                            "{\n"
+                            //                    "   fragColor = vec4 ( 1.0, 0.0, 0.0, 1.0 );\n"
+                            "   fragColor = v_color;\n"
+                            "}\n";
     programHandle = createProgram(vertexShader, fragmentShader);
     if (programHandle <= 0) {
         return -1;
@@ -46,15 +44,9 @@ int Triangle::init() {
 
 void Triangle::onDraw(int width, int height) {
     LOGD("hahahah");
-    GLfloat vertices[] = {
-            0.0f,  0.5f, 0.0f,
-            -0.5f, -0.5f, 0.0f,
-            0.5f, -0.5f, 0.0f
-    };
+    GLfloat vertices[] = {0.0f, 0.5f, 0.0f, -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f};
 
-    GLfloat color[] = {
-            1.0f, 0.0f, 0.0f, 1.0f
-    };
+    GLfloat color[] = {1.0f, 0.0f, 0.0f, 1.0f};
 
     GLint vertexCount = sizeof(vertices) / (sizeof(vertices[0]) * COORDS_PER_VERTEX);
 
