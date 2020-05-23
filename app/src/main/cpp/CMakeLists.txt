@@ -94,12 +94,24 @@ add_library( # Sets the name of the library.
         lame/version.c
         audio/mp3_encode.cpp
         opengl/shader_utils.cpp
+        opengl/EglCore.cpp
+        opengl/GLRender.cpp
+        opengl/WindowSurface.cpp
+        opengl/EglSurfaceBase.cpp
+        opengl/Triangle.cpp
+        opengl/GlUtils.cpp
+        opengl/GlShaders.cpp
+        opengl/MyLooper.cpp
+        opengl/Looper.cpp
         )
 
 # 查找代码中使用到的系统库
 find_library(
         log-lib
         log)
+
+find_library( EGL-lib EGL )
+find_library( GLESv2-lib GLESv2 )
 
 # 指定编译目标库时，cmake要链接的库
 target_link_libraries( # Specifies the target library.
@@ -115,5 +127,8 @@ target_link_libraries( # Specifies the target library.
         avutil
         swresample
         swscale
+        -ljnigraphics
         -landroid
-        ${log-lib})
+        ${log-lib}
+        ${EGL-lib}
+        ${GLESv2-lib})

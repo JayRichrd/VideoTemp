@@ -13,6 +13,7 @@
 #include <GLES3/gl3.h>
 #include "opengl/shader_utils.h"
 #include "opengl/log_util.h"
+#include "opengl/MyLooper.h"
 
 #define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0]))
 
@@ -46,6 +47,10 @@ SLVolumeItf fdPlayerVolume = NULL;
 
 GLuint g_program = NULL;
 GLint g_position = NULL;
+
+MyLooper *mLooper = NULL;
+ANativeWindow *mWindow = NULL;
+
 
 void release();
 
@@ -335,27 +340,45 @@ Java_com_cain_videotemp_audio_OpenSLEsDelegate_release(JNIEnv *env, jobject thiz
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeInit(JNIEnv *env, jobject thiz) {
-    // TODO: implement nativeInit()
+    mLooper = new MyLooper();
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeRelease(JNIEnv *env, jobject thiz) {
-    // TODO: implement nativeRelease()
-}
+    if (mLooper != NULL) {
+        mLooper->quit();
+        delete mLooper;
+        mLooper = NULL;
+    }
+    if (mWindow) {
+        ANativeWindow_release(mWindow);
+        mWindow = NULL;
+    }}
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceCreated(JNIEnv *env, jobject thiz, jobject surface) {
+    if (mWindow) {
+        ANativeWindow_release(mWindow);
+        mWindow = NULL;
+    }
+    mWindow = ANativeWindow_fromSurface(env, surface);
+    if (mLooper) {
+        mLooper->postMessage(kMsgSurfaceCreated, mWindow);
+    }
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceDestroyed(JNIEnv *env, jobject thiz) {
-    // TODO: implement onSurfaceDestroyed()
-}
+    if (mLooper) {
+        mLooper->postMessage(kMsgSurfaceDestroyed);
+    }}
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceCreated4Size(JNIEnv *env, jobject thiz, jint width, jint height) {
-    // TODO: implement onSurfaceCreated4Size()
-}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceChanged(JNIEnv *env, jobject thiz, jint width, jint height) {
+    if (mLooper) {
+        mLooper->postMessage(kMsgSurfaceChanged, width, height);
+    }}
