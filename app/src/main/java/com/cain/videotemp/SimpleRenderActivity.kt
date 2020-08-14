@@ -72,7 +72,7 @@ class SimpleRenderActivity : AppCompatActivity(), SurfaceHolder.Callback, OnFram
     override fun onDestroy() {
         Log.i(TAG, "onDestroy#")
         super.onDestroy()
-        eglRender.nativeRelease()
+        //eglRender?.nativeRelease()
     }
 
     private fun customOpenGLContext() {
