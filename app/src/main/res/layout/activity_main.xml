@@ -64,6 +64,13 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="@string/open_gl_custom_context" />
+
+        <Button
+            android:id="@+id/btn_simple_video_player"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/simple_video_player" />
     </LinearLayout>
 
 </ScrollView>

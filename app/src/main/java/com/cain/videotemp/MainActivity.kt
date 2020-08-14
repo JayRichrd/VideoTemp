@@ -22,6 +22,7 @@ import com.cain.videotemp.SimpleRenderActivity.Companion.TYPE_JNI_RENDER
 import com.cain.videotemp.SimpleRenderActivity.Companion.TYPE_RENDER
 import com.cain.videotemp.audio.Mp3Encoder
 import com.cain.videotemp.audio.OpenSLEsDelegate
+import com.cain.videotemp.video.SimpleVideoPlayerActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.io.FileInputStream
@@ -86,6 +87,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         btn_java_open_gl.setOnClickListener(this)
         btn_jni_open_gl.setOnClickListener(this)
         btn_opengl_custom_context.setOnClickListener(this)
+        btn_simple_video_player.setOnClickListener(this)
         // Android 6以上动态权限申请
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestNecessaryPermission(PERMISSIONS_STORAGE)
@@ -125,6 +127,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             R.id.btn_opengl_custom_context -> {
                 val intent = Intent(this, SimpleRenderActivity::class.java)
                 intent.putExtra(TYPE_RENDER, TYPE_CUSTOM_CONTEXT)
+                startActivity(intent)
+            }
+            R.id.btn_simple_video_player -> {
+                val intent = Intent(this, SimpleVideoPlayerActivity::class.java)
                 startActivity(intent)
             }
             else -> {

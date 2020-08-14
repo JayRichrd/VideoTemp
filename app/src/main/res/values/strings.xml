@@ -12,4 +12,5 @@
     <string name="open_gl_java_pic">open_gl_java/pic</string>
     <string name="open_gl_jni_pic">open_gl_jni/pic</string>
     <string name="open_gl_custom_context">open_gl_jni/custom_context</string>
+    <string name="simple_video_player">simple_video_player</string>
 </resources>
