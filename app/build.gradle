@@ -26,6 +26,16 @@ android {
         }
     }
 
+    packagingOptions {
+        pickFirst "**/libavutil.so"
+        pickFirst "**/libavcodec.so"
+        pickFirst "**/libswscale.so"
+        pickFirst "**/libswresample.so"
+        pickFirst "**/libavfilter.so"
+        pickFirst "**/libavformat.so"
+    }
+
+
     buildTypes {
         release {
             minifyEnabled false
