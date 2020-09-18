@@ -8,7 +8,6 @@ API=28
 NDK_SYSROOT=$NDK_BASE/platforms/android-28/arch-arm
 NDK_TOOLCHAIN_BASE=$NDK_BASE/toolchains/aarch64-linux-android-4.9/prebuilt/darwin-x86_64
 CC=$NDK_TOOLCHAIN_BASE/bin/armv7a-linux-android$API-clang
-# CXX =$NDK_TOOLCHAIN_BASE/bin/armv7a-linux-android$API-clang++
 LD=$NDK_TOOLCHAIN_BASE/bin/armv7a-linux-androideabi-ld
 CWD=`pwd`
 PROJECT_ROOT=$CWD
