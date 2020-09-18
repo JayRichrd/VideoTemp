@@ -10,11 +10,10 @@ NDK_TOOLCHAIN_BASE=$NDK_BASE/toolchains/aarch64-linux-android-4.9/prebuilt/darwi
 CC=$NDK_TOOLCHAIN_BASE/bin/armv7a-linux-android$API-clang
 # CXX =$NDK_TOOLCHAIN_BASE/bin/armv7a-linux-android$API-clang++
 LD=$NDK_TOOLCHAIN_BASE/bin/armv7a-linux-androideabi-ld
-#编译产物输出路径
-PREFIX=/Users/cainjiang/WorkSet/sox/android_lib
 CWD=`pwd`
 PROJECT_ROOT=$CWD
 ./configure \
+#编译产物输出路径
 --prefix=$(pwd)/android_lib \
 --target=armv7a \
 --host=arm-linux-androideabi \
