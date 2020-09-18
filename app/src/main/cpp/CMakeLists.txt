@@ -58,12 +58,12 @@ add_library(avformat
 set_target_properties(avformat
                       PROPERTIES IMPORTED_LOCATION
                       ${ffmpeg_lib_dir}/libavformat.so)
-add_library(avdevice
-            SHARED
-            IMPORTED)
-set_target_properties(avdevice
-                      PROPERTIES IMPORTED_LOCATION
-                      ${ffmpeg_lib_dir}/libavdevice.so)
+#add_library(avdevice
+#            SHARED
+#            IMPORTED)
+#set_target_properties(avdevice
+#                      PROPERTIES IMPORTED_LOCATION
+#                      ${ffmpeg_lib_dir}/libavdevice.so)
 
 # 配置目标so库编译信息
 add_library( # Sets the name of the library.
