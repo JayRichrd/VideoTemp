@@ -14,4 +14,5 @@
     <string name="open_gl_custom_context">open_gl_jni/custom_context</string>
     <string name="simple_video_player">simple_video_player</string>
     <string name="play">播放</string>
+    <string name="sox_convert">sox/convert</string>
 </resources>

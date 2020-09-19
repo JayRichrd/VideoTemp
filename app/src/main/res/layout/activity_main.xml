@@ -12,6 +12,12 @@
         android:padding="10dp">
 
         <Button
+            android:id="@+id/btn_sox_convert"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sox_convert" />
+
+        <Button
             android:id="@+id/btn_pcm_2_mp3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

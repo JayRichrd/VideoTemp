@@ -28,6 +28,7 @@ extern "C" {// 必须添加这个，否则会报很多undefined reference错误
 //像素处理
 #include <libswscale/swscale.h>
 #include <unistd.h>
+#include "sox/sox.h"
 }
 
 Mp3Encoder *mp3_encoder = NULL;
@@ -50,7 +51,12 @@ GLint g_position = NULL;
 
 MyLooper *mLooper = NULL;
 ANativeWindow *mWindow = NULL;
+long long fileLength;
 
+int callBack(sox_bool all_done, void *client_data) {
+    LOGE("callback  : %d ", all_done)
+    return 0;
+}
 
 void release();
 
@@ -91,7 +97,7 @@ void createEngine() {
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_cain_videotemp_MainActivity_stringFromJNI(JNIEnv *env, jobject thiz ) {
+Java_com_cain_videotemp_MainActivity_stringFromJNI(JNIEnv *env, jobject thiz) {
     std::string hello = "Hello from C++";
     return env->NewStringUTF(get_lame_version());
 }
@@ -285,13 +291,12 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_NativeRender_glDraw(JNIEnv *env, jobject thiz) {
     GLint vertexCount = 3;
     // OpenGL的世界坐标系是 [-1, -1, 1, 1]
-    GLfloat vertices[] = {
-            0.0f, 0.5f, 0.0f, // 第一个点（x, y, z）
-            -0.5f, -0.5f, 0.0f, // 第二个点（x, y, z）
-            0.5f, -0.5f, 0.0f // 第三个点（x, y, z）
+    GLfloat vertices[] = {0.0f, 0.5f, 0.0f, // 第一个点（x, y, z）
+                          -0.5f, -0.5f, 0.0f, // 第二个点（x, y, z）
+                          0.5f, -0.5f, 0.0f // 第三个点（x, y, z）
     };
     // clear color buffer
-    glClear(GL_COLOR_BUFFER_BIT); 
+    glClear(GL_COLOR_BUFFER_BIT);
     // 1. 选择使用的程序
     glUseProgram(g_program);
     // 2. 加载顶点数据
@@ -304,11 +309,11 @@ Java_com_cain_videotemp_pic_opengl_render_NativeRender_glDraw(JNIEnv *env, jobje
 extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_NativeRender_glResize(JNIEnv *env, jobject thiz, jint width, jint height) {
     // 设置视距窗口
-    glViewport(0, 0, width, height); 
+    glViewport(0, 0, width, height);
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_cain_videotemp_pic_opengl_render_NativeRender_glInit(JNIEnv *env, jobject thiz,jobject asset_manager) {
+Java_com_cain_videotemp_pic_opengl_render_NativeRender_glInit(JNIEnv *env, jobject thiz, jobject asset_manager) {
     AAssetManager *am = AAssetManager_fromJava(env, asset_manager);
     char *vertexShaderSource = read_asset_file("vertex.vsh", am);
     char *fragmentShaderSource = read_asset_file("fragment.fsh", am);
@@ -318,22 +323,20 @@ Java_com_cain_videotemp_pic_opengl_render_NativeRender_glInit(JNIEnv *env, jobje
         return;
     }
     // vPosition 是在 'vertex.vsh' 文件中定义的
-    g_position =glGetAttribLocation(g_program, "vPosition");
+    g_position = glGetAttribLocation(g_program, "vPosition");
     LOGD("g_position: %d", g_position);
     // 背景颜色设置为黑色 RGBA (range: 0.0 ~ 1.0)
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-extern "C"
-JNIEXPORT void JNICALL
+extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_audio_OpenSLEsDelegate_pause(JNIEnv *env, jobject thiz) {
     if (fdPlayerPlay != NULL) {
         (*fdPlayerPlay)->SetPlayState(fdPlayerPlay, SL_PLAYSTATE_PAUSED);
     }
 }
 
-extern "C"
-JNIEXPORT void JNICALL
+extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_audio_OpenSLEsDelegate_release(JNIEnv *env, jobject thiz) {
     release();
 }
@@ -343,8 +346,7 @@ Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeInit(JNIEnv *env, jobj
     mLooper = new MyLooper();
 }
 
-extern "C"
-JNIEXPORT void JNICALL
+extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeRelease(JNIEnv *env, jobject thiz) {
     if (mLooper != NULL) {
         mLooper->quit();
@@ -357,8 +359,7 @@ Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeRelease(JNIEnv *env, j
     }
 }
 
-extern "C"
-JNIEXPORT void JNICALL
+extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceCreated(JNIEnv *env, jobject thiz, jobject surface) {
     if (mWindow) {
         ANativeWindow_release(mWindow);
@@ -370,18 +371,87 @@ Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceCreated(JNIEnv *env
     }
 }
 
-extern "C"
-JNIEXPORT void JNICALL
+extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceDestroyed(JNIEnv *env, jobject thiz) {
     if (mLooper) {
         mLooper->postMessage(kMsgSurfaceDestroyed);
     }
 }
 
-extern "C"
-JNIEXPORT void JNICALL
+extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceChanged(JNIEnv *env, jobject thiz, jint width, jint height) {
     if (mLooper) {
         mLooper->postMessage(kMsgSurfaceChanged, width, height);
     }
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cain_videotemp_audio_SoxUtils_soxAudio(JNIEnv *env, jobject thiz, jstring int_put_wav_path, jstring out_put_wav_path) {
+    const char *inputPath = env->GetStringUTFChars(int_put_wav_path, 0);
+    const char *outputPath = env->GetStringUTFChars(out_put_wav_path, 0);
+    LOGI("开始处理")
+    int re = sox_init();
+    if (re != SOX_SUCCESS) {
+        LOGE("初始化 sox 失败")
+        return;
+    }
+    //初始化输入文件
+    sox_format_t *in;
+    in = sox_open_read(inputPath, NULL, NULL, NULL);
+    LOGE("length %lld", lsx_filelength(in))
+    fileLength = in->signal.length;
+    //初始化输出文件
+    sox_format_t *out;
+    int i = in->signal.channels;
+    LOGE("%d", i);
+    out = sox_open_write(outputPath, &in->signal, &in->encoding, NULL, NULL, NULL);
+    //初始化效果器链
+    sox_effects_chain_t *chain;
+    chain = sox_create_effects_chain(&in->encoding, &out->encoding);
+    //配置输入效果器
+    sox_effect_t *inputEffect;
+    inputEffect = sox_create_effect(sox_find_effect("input"));
+    char *args[10];
+    args[0] = (char *) in;
+    sox_effect_options(inputEffect, 1, args);
+    sox_add_effect(chain, inputEffect, &in->signal, &in->signal);
+    delete (inputEffect);
+    //混音处理器 效果器
+    sox_effect_t *e;
+    e = sox_create_effect(sox_find_effect("reverb"));
+    char *reverbrance = "30";
+    char *hfDamping = "30";
+    char *roomScale = "30";
+
+    char *stereoDepth = "30";
+    char *preDelay = "30";
+    char *wetGain = "0";
+    char *args1[] = {reverbrance, hfDamping, roomScale, stereoDepth, preDelay, wetGain};
+    int ref = sox_effect_options(e, 6, args1);
+    sox_add_effect(chain, e, &in->signal, &in->signal);
+    delete (e);
+
+    //音量增强效果器
+    sox_effect_t *volEffect;
+    volEffect = sox_create_effect(sox_find_effect("vol"));
+    args[0] = "5dB";
+    sox_effect_options(volEffect, 1, args);
+    sox_add_effect(chain, volEffect, &in->signal, &in->signal);
+    delete (volEffect);
+    //输出效果器
+    sox_effect_t *outputEffect;
+    outputEffect = sox_create_effect(sox_find_effect("output"));
+    args[0] = (char *) out;
+    sox_effect_options(outputEffect, 1, args);
+    sox_add_effect(chain, outputEffect, &in->signal, &in->signal);
+    delete (outputEffect);
+    void *data;
+    sox_flow_effects(chain, (sox_flow_effects_callback) (callBack), data);
+    sox_delete_effects_chain(chain);
+    sox_close(out);
+    sox_close(in);
+    sox_quit();
+    LOGE("处理完成")
+    env->ReleaseStringUTFChars(int_put_wav_path, inputPath);
+    env->ReleaseStringUTFChars(out_put_wav_path, outputPath);
 }

@@ -22,6 +22,7 @@ import com.cain.videotemp.SimpleRenderActivity.Companion.TYPE_JNI_RENDER
 import com.cain.videotemp.SimpleRenderActivity.Companion.TYPE_RENDER
 import com.cain.videotemp.audio.Mp3Encoder
 import com.cain.videotemp.audio.OpenSLEsDelegate
+import com.cain.videotemp.audio.SoxUtils
 import com.cain.videotemp.video.SimpleVideoPlayerActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
@@ -34,6 +35,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         const val TAG = "MainActivity"
         const val PERMISSION_REQUEST_FROM_MAIN = 1
         const val DATA_DIR = "/videotest/"
+        const val SOX_AUDIO_DIR = "/sox_audio/"
+        const val WAV_INPUT = "test.wav"
+        const val WAV_OUTPUT = "test_output.wav"
         const val PCM_FILE = "background2.pcm"
         const val MP3_FILE = "test.mp3"
         const val ASSETS_MUSIC_FILE = "mydream.m4a"
@@ -46,11 +50,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         const val INIT_ERROR = 0
 
         val PERMISSIONS_STORAGE = arrayOf(
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
         val PERMISSIONS_INTERNET = arrayOf(
-            Manifest.permission.INTERNET,
-            Manifest.permission.ACCESS_WIFI_STATE)
+                Manifest.permission.INTERNET,
+                Manifest.permission.ACCESS_WIFI_STATE)
 
         // Used to load the 'native-lib' library on application startup.
         init {
@@ -63,19 +67,21 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private val minbufferSize by lazy { AudioTrack.getMinBufferSize(SAMPLE_RATE_HZ, AUDIO_OUT_CHANNEL_CONFIG, AUDIO_OUT_FORMAT) }
     private val audioTrack by lazy {
         AudioTrack(
-            AudioAttributes.Builder().apply {
-                setUsage(AudioAttributes.USAGE_MEDIA)
-                setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-            }.build(),
-            AudioFormat.Builder().apply {
-                setSampleRate(SAMPLE_RATE_HZ)
-                setEncoding(AUDIO_OUT_FORMAT)
-                setChannelMask(AUDIO_OUT_CHANNEL_CONFIG)
-            }.build(),
-            minbufferSize,
-            AudioTrack.MODE_STREAM,
-            AudioManager.AUDIO_SESSION_ID_GENERATE)
+                AudioAttributes.Builder().apply {
+                    setUsage(AudioAttributes.USAGE_MEDIA)
+                    setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                }.build(),
+                AudioFormat.Builder().apply {
+                    setSampleRate(SAMPLE_RATE_HZ)
+                    setEncoding(AUDIO_OUT_FORMAT)
+                    setChannelMask(AUDIO_OUT_CHANNEL_CONFIG)
+                }.build(),
+                minbufferSize,
+                AudioTrack.MODE_STREAM,
+                AudioManager.AUDIO_SESSION_ID_GENERATE)
     }
+
+    private val soxUtils by lazy { SoxUtils() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,6 +94,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         btn_jni_open_gl.setOnClickListener(this)
         btn_opengl_custom_context.setOnClickListener(this)
         btn_simple_video_player.setOnClickListener(this)
+        btn_sox_convert.setOnClickListener(this)
         // Android 6以上动态权限申请
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestNecessaryPermission(PERMISSIONS_STORAGE)
@@ -133,10 +140,19 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 val intent = Intent(this, SimpleVideoPlayerActivity::class.java)
                 startActivity(intent)
             }
+            R.id.btn_sox_convert -> {
+                val inPutWavPath = Environment.getExternalStorageDirectory().absolutePath + SOX_AUDIO_DIR + WAV_INPUT
+                val outPutWavPath = Environment.getExternalStorageDirectory().absolutePath + SOX_AUDIO_DIR + WAV_OUTPUT
+                soxConvert(inPutWavPath, outPutWavPath)
+            }
             else -> {
                 Log.w(TAG, "onClick# nothing to do.")
             }
         }
+    }
+
+    private fun soxConvert(inPutWavPath: String, outPutWavPath: String) {
+        soxUtils.soxAudio(inPutWavPath,outPutWavPath)
     }
 
     private fun openSlPlayOrPause() {
