@@ -23,6 +23,7 @@ import com.cain.videotemp.SimpleRenderActivity.Companion.TYPE_RENDER
 import com.cain.videotemp.audio.Mp3Encoder
 import com.cain.videotemp.audio.OpenSLEsDelegate
 import com.cain.videotemp.audio.SoxUtils
+import com.cain.videotemp.video.FFmpegFilterManager
 import com.cain.videotemp.video.SimpleVideoPlayerActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
@@ -41,6 +42,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         const val PCM_FILE = "background2.pcm"
         const val MP3_FILE = "test.mp3"
         const val ASSETS_MUSIC_FILE = "mydream.m4a"
+        const val FILTER_DEMO_DIR = "/filter_demo/"
+        const val FILTER_DEMO_INPUT_FILE = "test.mp4"
+        const val FILTER_DEMO_OUTPUT_FILE = "new_test.mp4"
+        const val FILTER_DEMO_FILTER_DESC = "drawbox=30:10:64:64:red"
         const val SAMPLE_RATE_HZ = 44100
         const val BYTE_RATE = 128
         const val AUDIO_CHANEL = AudioFormat.CHANNEL_IN_MONO
@@ -80,6 +85,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 AudioTrack.MODE_STREAM,
                 AudioManager.AUDIO_SESSION_ID_GENERATE)
     }
+    private val filterManager: FFmpegFilterManager by lazy { FFmpegFilterManager() }
+
 
     private val soxUtils by lazy { SoxUtils() }
 
@@ -95,6 +102,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         btn_opengl_custom_context.setOnClickListener(this)
         btn_simple_video_player.setOnClickListener(this)
         btn_sox_convert.setOnClickListener(this)
+        btn_filter.setOnClickListener(this)
         // Android 6以上动态权限申请
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestNecessaryPermission(PERMISSIONS_STORAGE)
@@ -144,6 +152,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 val inPutWavPath = Environment.getExternalStorageDirectory().absolutePath + SOX_AUDIO_DIR + WAV_INPUT
                 val outPutWavPath = Environment.getExternalStorageDirectory().absolutePath + SOX_AUDIO_DIR + WAV_OUTPUT
                 soxConvert(inPutWavPath, outPutWavPath)
+            }
+            R.id.btn_filter -> {
+                val inputFilePath = Environment.getExternalStorageDirectory().path + FILTER_DEMO_DIR + FILTER_DEMO_INPUT_FILE
+                val outputFilePath = Environment.getExternalStorageDirectory().path + FILTER_DEMO_DIR + FILTER_DEMO_OUTPUT_FILE
+                Log.i(TAG, "onDoFilter# inputFilePath = ${inputFilePath}, existed: ${File(inputFilePath).exists()}\noutputFilePath = ${outputFilePath}\nfilter_desc = ${FILTER_DEMO_FILTER_DESC}")
+                filterManager.doFilter(inputFilePath,outputFilePath, FILTER_DEMO_FILTER_DESC)
             }
             else -> {
                 Log.w(TAG, "onClick# nothing to do.")
