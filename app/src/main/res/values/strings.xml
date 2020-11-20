@@ -16,4 +16,7 @@
     <string name="play">播放</string>
     <string name="sox_convert">sox/convert</string>
     <string name="ffmpeg_filter">ffmpeg/filter</string>
+    <string name="filter_1">滤镜1</string>
+    <string name="filter_2">滤镜2</string>
+    <string name="filter_3">滤镜3</string>
 </resources>

@@ -17,6 +17,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".FfmpegFilterActivity"></activity>
         <activity android:name=".video.SimpleVideoPlayerActivity" />
         <activity android:name=".SimpleRenderActivity" />
         <activity android:name=".MainActivity">

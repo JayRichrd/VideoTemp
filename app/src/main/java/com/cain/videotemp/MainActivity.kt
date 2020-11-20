@@ -23,7 +23,6 @@ import com.cain.videotemp.SimpleRenderActivity.Companion.TYPE_RENDER
 import com.cain.videotemp.audio.Mp3Encoder
 import com.cain.videotemp.audio.OpenSLEsDelegate
 import com.cain.videotemp.audio.SoxUtils
-import com.cain.videotemp.video.FFmpegFilterManager
 import com.cain.videotemp.video.SimpleVideoPlayerActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
@@ -85,7 +84,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 AudioTrack.MODE_STREAM,
                 AudioManager.AUDIO_SESSION_ID_GENERATE)
     }
-    private val filterManager: FFmpegFilterManager by lazy { FFmpegFilterManager() }
 
 
     private val soxUtils by lazy { SoxUtils() }
@@ -154,10 +152,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 soxConvert(inPutWavPath, outPutWavPath)
             }
             R.id.btn_filter -> {
-                val inputFilePath = Environment.getExternalStorageDirectory().path + FILTER_DEMO_DIR + FILTER_DEMO_INPUT_FILE
-                val outputFilePath = Environment.getExternalStorageDirectory().path + FILTER_DEMO_DIR + FILTER_DEMO_OUTPUT_FILE
-                Log.i(TAG, "onDoFilter# inputFilePath = ${inputFilePath}, existed: ${File(inputFilePath).exists()}\noutputFilePath = ${outputFilePath}\nfilter_desc = ${FILTER_DEMO_FILTER_DESC}")
-                filterManager.doFilter(inputFilePath,outputFilePath, FILTER_DEMO_FILTER_DESC)
+                val intent = Intent(this, FfmpegFilterActivity::class.java)
+                startActivity(intent)
             }
             else -> {
                 Log.w(TAG, "onClick# nothing to do.")
