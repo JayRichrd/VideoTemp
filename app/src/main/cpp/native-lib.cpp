@@ -35,42 +35,38 @@ extern "C" {// 必须添加这个，否则会报很多undefined reference错误
 #include "sox/sox.h"
 }
 
-Mp3Encoder *mp3_encoder = NULL;
+Mp3Encoder *mp3_encoder = nullptr;
 // 引擎对象
-SLObjectItf engineObject = NULL;
+SLObjectItf engineObject = nullptr;
 // 引擎方法接口
-SLEngineItf engineEngine = NULL;
+SLEngineItf engineEngine = nullptr;
 //混音器
-SLObjectItf outputMixObject = NULL;
-SLEnvironmentalReverbItf outputMixEnvironmentalReverb = NULL;
+SLObjectItf outputMixObject = nullptr;
+SLEnvironmentalReverbItf outputMixEnvironmentalReverb = nullptr;
 SLEnvironmentalReverbSettings reverbSettings = SL_I3DL2_ENVIRONMENT_PRESET_STONECORRIDOR;
 //assets播放器
-SLObjectItf fdPlayerObject = NULL;
-SLPlayItf fdPlayerPlay = NULL;
+SLObjectItf fdPlayerObject = nullptr;
+SLPlayItf fdPlayerPlay = nullptr;
 //声音控制接口
-SLVolumeItf fdPlayerVolume = NULL;
+SLVolumeItf fdPlayerVolume = nullptr;
 
-GLuint g_program = NULL;
+GLuint g_program = 0;
 GLint g_position = NULL;
 
-MyLooper *mLooper = NULL;
-ANativeWindow *mWindow = NULL;
-long long fileLength;
+MyLooper *mLooper = nullptr;
+ANativeWindow *mWindow = nullptr;
 
-AVFormatContext *fmt_ctx;
-AVCodecContext *dec_ctx;
 AVFilterContext *buffersink_ctx;
 AVFilterContext *buffersrc_ctx;
 AVFilterGraph *filter_graph;
 //AVCodecContext *pCodecCtx;
-int video_stream_index = -1;
 
 /**
  * 打开输入文件
  * @param name 文件地址
  * @return
  */
-int open_input_file(const char *input_file_path);
+//int open_input_file(const char *input_file_path);
 
 /**
  * 初始化filter
@@ -85,7 +81,7 @@ int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx);
  * @param out_file
  * @return
  */
-int save_frame(AVFrame *filter_frame, FILE *out_file);
+//int save_frame(AVFrame *filter_frame, FILE *out_file);
 
 int callBack(sox_bool all_done, void *client_data) {
     LOGE("callback  : %d ", all_done)
@@ -98,32 +94,32 @@ void createEngine();
 
 void release() {
     // destroy file descriptor audio player object, and invalidate all associated interfaces
-    if (fdPlayerObject != NULL) {
+    if (fdPlayerObject != nullptr) {
         (*fdPlayerObject)->Destroy(fdPlayerObject);
-        fdPlayerObject = NULL;
-        fdPlayerPlay = NULL;
-        fdPlayerVolume = NULL;
+        fdPlayerObject = nullptr;
+        fdPlayerPlay = nullptr;
+        fdPlayerVolume = nullptr;
     }
 
     // destroy output mix object, and invalidate all associated interfaces
-    if (outputMixObject != NULL) {
+    if (outputMixObject != nullptr) {
         (*outputMixObject)->Destroy(outputMixObject);
-        outputMixObject = NULL;
-        outputMixEnvironmentalReverb = NULL;
+        outputMixObject = nullptr;
+        outputMixEnvironmentalReverb = nullptr;
     }
 
     // destroy engine object, and invalidate all associated interfaces
-    if (engineObject != NULL) {
+    if (engineObject != nullptr) {
         (*engineObject)->Destroy(engineObject);
-        engineObject = NULL;
-        engineEngine = NULL;
+        engineObject = nullptr;
+        engineEngine = nullptr;
     }
 }
 
 void createEngine() {
     // 创建引擎
     SLEngineOption engine_options[] = {{(SLuint32) SL_ENGINEOPTION_THREADSAFE, (SLuint32) SL_BOOLEAN_TRUE}};
-    slCreateEngine(&engineObject, ARRAY_LEN(engine_options), engine_options, 0, NULL, NULL);
+    slCreateEngine(&engineObject, ARRAY_LEN(engine_options), engine_options, 0, nullptr, nullptr);
     // 初始化引擎
     (*engineObject)->Realize(engineObject, SL_BOOLEAN_FALSE);
     // 获取这个引擎对象的方法接口
@@ -148,8 +144,8 @@ Java_com_cain_videotemp_audio_Mp3Encoder_destroy(JNIEnv *env, jobject thiz) {
 
 extern "C" JNIEXPORT jint JNICALL
 Java_com_cain_videotemp_audio_Mp3Encoder_initEcoder(JNIEnv *env, jobject thiz, jstring pcmPath, jint audioChanel, jint byteRate, jint sampleRate, jstring mp3Path) {
-    const char *pcm_path = env->GetStringUTFChars(pcmPath, NULL);
-    const char *mp3_path = env->GetStringUTFChars(mp3Path, NULL);
+    const char *pcm_path = env->GetStringUTFChars(pcmPath, nullptr);
+    const char *mp3_path = env->GetStringUTFChars(mp3Path, nullptr);
     mp3_encoder = new Mp3Encoder();
     int ret = mp3_encoder->init_encoder(pcm_path, mp3_path, sampleRate, audioChanel, byteRate);
     env->ReleaseStringUTFChars(pcmPath, pcm_path);
@@ -159,7 +155,7 @@ Java_com_cain_videotemp_audio_Mp3Encoder_initEcoder(JNIEnv *env, jobject thiz, j
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_video_FFVideoPlayer_render(JNIEnv *env, jobject thiz, jstring play_url, jobject surface) {
-    const char *url = env->GetStringUTFChars(play_url, 0);
+    const char *url = env->GetStringUTFChars(play_url, nullptr);
     /**
      * 注册
      * 在4.0之后已经过期，可以直接忽略调用这个函数
@@ -168,8 +164,8 @@ Java_com_cain_videotemp_video_FFVideoPlayer_render(JNIEnv *env, jobject thiz, js
     // 打开地址并获取里面的内容
     // avFormatContext是内容的一个上下文
     AVFormatContext *avFormatContext = avformat_alloc_context();
-    avformat_open_input(&avFormatContext, url, NULL, NULL);
-    avformat_find_stream_info(avFormatContext, NULL);
+    avformat_open_input(&avFormatContext, url, nullptr, nullptr);
+    avformat_find_stream_info(avFormatContext, nullptr);
 
     // 找出视频流
     int video_index = -1;
@@ -187,7 +183,7 @@ Java_com_cain_videotemp_video_FFVideoPlayer_render(JNIEnv *env, jobject thiz, js
     // 获取解码器
     AVCodec *avCodec = avcodec_find_decoder(avCodecContext->codec_id);
     // 打开解码器
-    if (avcodec_open2(avCodecContext, avCodec, NULL) < 0) { //打开失败直接返回
+    if (avcodec_open2(avCodecContext, avCodec, nullptr) < 0) { //打开失败直接返回
         return;
     }
 
@@ -196,7 +192,7 @@ Java_com_cain_videotemp_video_FFVideoPlayer_render(JNIEnv *env, jobject thiz, js
      * AVPacket的作用是保存解码之前的数据和一些附加信息，例如显示时间戳(pts)、解码时间戳(dts)、数据时长和所在媒体流的索引等
      * AVFrame的作用是存放解码过后的数据
      */
-    AVPacket *avPacket = static_cast<AVPacket *>(av_malloc(sizeof(AVPacket)));
+    auto *avPacket = static_cast<AVPacket *>(av_malloc(sizeof(AVPacket)));
     av_init_packet(avPacket);
     /**
      * 分配一个AVFrame结构体
@@ -227,7 +223,7 @@ Java_com_cain_videotemp_video_FFVideoPlayer_render(JNIEnv *env, jobject thiz, js
     }
 
     SwsContext *swsContext = sws_getContext(avCodecContext->width, avCodecContext->height, avCodecContext->pix_fmt, avCodecContext->width, avCodecContext->height, AV_PIX_FMT_RGBA,
-                                            SWS_BICUBIC, NULL, NULL, NULL);
+                                            SWS_BICUBIC, nullptr, nullptr, nullptr);
     // 视频缓冲区
     ANativeWindow_Buffer nativeWindow_outBuffer;
 
@@ -243,7 +239,7 @@ Java_com_cain_videotemp_video_FFVideoPlayer_render(JNIEnv *env, jobject thiz, js
                 /**
                  * 上锁
                  */
-                ANativeWindow_lock(pANativeWindow, &nativeWindow_outBuffer, NULL);
+                ANativeWindow_lock(pANativeWindow, &nativeWindow_outBuffer, nullptr);
                 /**
                  * 转换成RGB格式
                  */
@@ -275,7 +271,7 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_audio_OpenSLEsDelegate_playByAssets(JNIEnv *env, jobject thiz, jobject asset_manager, jstring file_name) {
     // 先释放资源
     release();
-    const char *utf8 = env->GetStringUTFChars(file_name, NULL);
+    const char *utf8 = env->GetStringUTFChars(file_name, nullptr);
     // use asset manager to open asset by filename
     AAssetManager *mgr = AAssetManager_fromJava(env, asset_manager);
     AAsset *asset = AAssetManager_open(mgr, utf8, AASSET_MODE_UNKNOWN);
@@ -298,11 +294,11 @@ Java_com_cain_videotemp_audio_OpenSLEsDelegate_playByAssets(JNIEnv *env, jobject
     //第三步，设置播放器参数和创建播放器
     // 1、配置 audio source
     SLDataLocator_AndroidFD loc_fd = {SL_DATALOCATOR_ANDROIDFD, fd, start, length};
-    SLDataFormat_MIME format_mime = {SL_DATAFORMAT_MIME, NULL, SL_CONTAINERTYPE_UNSPECIFIED};
+    SLDataFormat_MIME format_mime = {SL_DATAFORMAT_MIME, nullptr, SL_CONTAINERTYPE_UNSPECIFIED};
     SLDataSource audioSrc = {&loc_fd, &format_mime};
     // 2、 配置 audio sink
     SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObject};
-    SLDataSink audioSnk = {&loc_outmix, NULL};
+    SLDataSink audioSnk = {&loc_outmix, nullptr};
     // 创建播放器
     const SLInterfaceID ids[3] = {SL_IID_SEEK, SL_IID_MUTESOLO, SL_IID_VOLUME};
     const SLboolean req[3] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
@@ -314,7 +310,7 @@ Java_com_cain_videotemp_audio_OpenSLEsDelegate_playByAssets(JNIEnv *env, jobject
     // 得到声音控制接口
     (*fdPlayerObject)->GetInterface(fdPlayerObject, SL_IID_VOLUME, &fdPlayerVolume);
     // 设置播放状态
-    if (NULL != fdPlayerPlay) {
+    if (nullptr != fdPlayerPlay) {
         (*fdPlayerPlay)->SetPlayState(fdPlayerPlay, SL_PLAYSTATE_PLAYING);
     }
     //设置播放音量 （100 * -50：静音 ）
@@ -353,19 +349,19 @@ Java_com_cain_videotemp_pic_opengl_render_NativeRender_glInit(JNIEnv *env, jobje
     char *fragmentShaderSource = read_asset_file("fragment.fsh", am);
     g_program = create_program(vertexShaderSource, fragmentShaderSource);
     if (g_program == GL_NONE) {
-        LOGE("gl init failed!");
+        LOGE("gl init failed!")
         return;
     }
     // vPosition 是在 'vertex.vsh' 文件中定义的
     g_position = glGetAttribLocation(g_program, "vPosition");
-    LOGD("g_position: %d", g_position);
+    LOGD("g_position: %d", g_position)
     // 背景颜色设置为黑色 RGBA (range: 0.0 ~ 1.0)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_audio_OpenSLEsDelegate_pause(JNIEnv *env, jobject thiz) {
-    if (fdPlayerPlay != NULL) {
+    if (fdPlayerPlay != nullptr) {
         (*fdPlayerPlay)->SetPlayState(fdPlayerPlay, SL_PLAYSTATE_PAUSED);
     }
 }
@@ -382,14 +378,14 @@ Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeInit(JNIEnv *env, jobj
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_nativeRelease(JNIEnv *env, jobject thiz) {
-    if (mLooper != NULL) {
+    if (mLooper != nullptr) {
         mLooper->quit();
         delete mLooper;
-        mLooper = NULL;
+        mLooper = nullptr;
     }
     if (mWindow) {
         ANativeWindow_release(mWindow);
-        mWindow = NULL;
+        mWindow = nullptr;
     }
 }
 
@@ -397,7 +393,7 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceCreated(JNIEnv *env, jobject thiz, jobject surface) {
     if (mWindow) {
         ANativeWindow_release(mWindow);
-        mWindow = NULL;
+        mWindow = nullptr;
     }
     mWindow = ANativeWindow_fromSurface(env, surface);
     if (mLooper) {
@@ -421,10 +417,10 @@ Java_com_cain_videotemp_pic_opengl_render_EGLRender_onSurfaceChanged(JNIEnv *env
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_cain_videotemp_audio_SoxUtils_soxAudio(JNIEnv *env, jobject thiz, jstring int_put_wav_path, jstring out_put_wav_path) {
-    const char *inputPath = env->GetStringUTFChars(int_put_wav_path, 0);
-    const char *outputPath = env->GetStringUTFChars(out_put_wav_path, 0);
+    const char *inputPath = env->GetStringUTFChars(int_put_wav_path, nullptr);
+    const char *outputPath = env->GetStringUTFChars(out_put_wav_path, nullptr);
 
-    FILE *out_file = NULL;
+    FILE *out_file;
     LOGE("打开文件")
     out_file = fopen(outputPath, "wb");
     if (!out_file) {
@@ -439,14 +435,14 @@ Java_com_cain_videotemp_audio_SoxUtils_soxAudio(JNIEnv *env, jobject thiz, jstri
     }
     //初始化输入文件
     sox_format_t *in;
-    in = sox_open_read(inputPath, NULL, NULL, NULL);
+    in = sox_open_read(inputPath, nullptr, nullptr, nullptr);
     LOGE("length %lld", lsx_filelength(in))
-    fileLength = in->signal.length;
+    //in->signal.length;
     //初始化输出文件
     sox_format_t *out;
     int i = in->signal.channels;
-    LOGE("%d", i);
-    out = sox_open_write(outputPath, &in->signal, &in->encoding, NULL, NULL, NULL);
+    LOGE("%d", i)
+    out = sox_open_write(outputPath, &in->signal, &in->encoding, nullptr, nullptr, nullptr);
     //初始化效果器链
     sox_effects_chain_t *chain;
     chain = sox_create_effects_chain(&in->encoding, &out->encoding);
@@ -487,7 +483,7 @@ Java_com_cain_videotemp_audio_SoxUtils_soxAudio(JNIEnv *env, jobject thiz, jstri
     sox_effect_options(outputEffect, 1, args);
     sox_add_effect(chain, outputEffect, &in->signal, &in->signal);
     delete (outputEffect);
-    void *data;
+    void *data = nullptr;
     sox_flow_effects(chain, (sox_flow_effects_callback) (callBack), data);
     sox_delete_effects_chain(chain);
     sox_close(out);
@@ -541,8 +537,8 @@ int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx) {
     /**
      * 创建过滤器实例,并将其添加到现有graph中
      */
-    if ((ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in", args, NULL, filter_graph)) < 0) {
-        av_log(NULL, AV_LOG_ERROR, "Cannot create buffer source\n");
+    if ((ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in", args, nullptr, filter_graph)) < 0) {
+        av_log(nullptr, AV_LOG_ERROR, "Cannot create buffer source\n");
         goto end;
     }
 
@@ -553,10 +549,10 @@ int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx) {
     AVBufferSinkParams *buffersink_params;
     buffersink_params = av_buffersink_params_alloc();
     buffersink_params->pixel_fmts = pix_fmts;
-    ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out", NULL, buffersink_params, filter_graph);
+    ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out", nullptr, buffersink_params, filter_graph);
     av_free(buffersink_params);
     if (ret < 0) {
-        av_log(NULL, AV_LOG_ERROR, "Cannot create buffer sink\n");
+        av_log(nullptr, AV_LOG_ERROR, "Cannot create buffer sink\n");
         goto end;
     }
 
@@ -573,7 +569,7 @@ int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx) {
     outputs->name = av_strdup("in");
     outputs->filter_ctx = buffersrc_ctx;
     outputs->pad_idx = 0;
-    outputs->next = NULL;
+    outputs->next = nullptr;
 
     /*
      * The buffer sink input must be connected to the output pad of
@@ -584,15 +580,15 @@ int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx) {
     inputs->name = av_strdup("out");
     inputs->filter_ctx = buffersink_ctx;
     inputs->pad_idx = 0;
-    inputs->next = NULL;
+    inputs->next = nullptr;
 
     /**
      * 将由字符串描述的图形添加到图形中
      */
-    if ((ret = avfilter_graph_parse_ptr(filter_graph, filter_descr, &inputs, &outputs, NULL)) < 0)
+    if ((ret = avfilter_graph_parse_ptr(filter_graph, filter_descr, &inputs, &outputs, nullptr)) < 0)
         goto end;
 
-    if ((ret = avfilter_graph_config(filter_graph, NULL)) < 0)
+    if ((ret = avfilter_graph_config(filter_graph, nullptr)) < 0)
         goto end;
 
     end:
@@ -610,14 +606,14 @@ Java_com_cain_videotemp_FfmpegFilterActivity_play(JNIEnv *env, jobject thiz, jst
     avfilter_register_all();
     AVFormatContext *pFormatCtx = avformat_alloc_context();
     // Open video file
-    if (avformat_open_input(&pFormatCtx, input_file_path, NULL, NULL) != 0) {
+    if (avformat_open_input(&pFormatCtx, input_file_path, nullptr, nullptr) != 0) {
         // Couldn't open file
-        LOGD("Couldn't open file:%s\n", input_file_path);
+        LOGD("Couldn't open file:%s\n", input_file_path)
         return -1;
     }
     // Retrieve stream information
-    if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
-        LOGD("Couldn't find stream information.");
+    if (avformat_find_stream_info(pFormatCtx, nullptr) < 0) {
+        LOGD("Couldn't find stream information.")
         return -1;
     }
     // Find the first video stream
@@ -628,7 +624,7 @@ Java_com_cain_videotemp_FfmpegFilterActivity_play(JNIEnv *env, jobject thiz, jst
         }
     }
     if (videoStream == -1) {
-        LOGD("Didn't find a video stream.");
+        LOGD("Didn't find a video stream.")
         return -1; // Didn't find a video stream
     }
     // Get a pointer to the codec context for the video stream
@@ -640,13 +636,13 @@ Java_com_cain_videotemp_FfmpegFilterActivity_play(JNIEnv *env, jobject thiz, jst
     }
     // Find the decoder for the video stream
     AVCodec *pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
-    if (pCodec == NULL) {
+    if (pCodec == nullptr) {
         LOGD("Codec not found.")
         return -1; // Codec not found
     }
 
-    if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0) {
-        LOGD("Could not open codec.");
+    if (avcodec_open2(pCodecCtx, pCodec, nullptr) < 0) {
+        LOGD("Could not open codec.")
         return -1; // Could not open codec
     }
 
@@ -658,22 +654,22 @@ Java_com_cain_videotemp_FfmpegFilterActivity_play(JNIEnv *env, jobject thiz, jst
     // 设置native window的buffer大小,可自动拉伸
     ANativeWindow_setBuffersGeometry(nativeWindow, videoWidth, videoHeight, WINDOW_FORMAT_RGBA_8888);
     ANativeWindow_Buffer windowBuffer;
-    if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0) {
-        LOGD("Could not open codec.");
+    if (avcodec_open2(pCodecCtx, pCodec, nullptr) < 0) {
+        LOGD("Could not open codec.")
         return -1; // Could not open codec
     }
     // Allocate video frame
     AVFrame *pFrame = av_frame_alloc();
     // 用于渲染
     AVFrame *pFrameRGBA = av_frame_alloc();
-    if (pFrameRGBA == NULL || pFrame == NULL) {
+    if (pFrameRGBA == nullptr || pFrame == nullptr) {
         LOGD("Could not allocate video frame.")
         return -1;
     }
     // Determine required buffer size and allocate buffer
     // buffer中数据就是用于渲染的,且格式为RGBA
     int numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height, 1);
-    uint8_t *buffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
+    auto *buffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
     av_image_fill_arrays(pFrameRGBA->data, pFrameRGBA->linesize, buffer, AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height, 1);
     // 由于解码出来的帧格式不是RGBA的,在渲染之前需要进行格式转换
     struct SwsContext *sws_ctx = sws_getContext(pCodecCtx->width,
@@ -683,9 +679,9 @@ Java_com_cain_videotemp_FfmpegFilterActivity_play(JNIEnv *env, jobject thiz, jst
                                                 pCodecCtx->height,
                                                 AV_PIX_FMT_RGBA,
                                                 SWS_BILINEAR,
-                                                NULL,
-                                                NULL,
-                                                NULL);
+                                                nullptr,
+                                                nullptr,
+                                                nullptr);
     int frameFinished;
     AVPacket packet;
     while (av_read_frame(pFormatCtx, &packet) >= 0) {
@@ -716,7 +712,7 @@ Java_com_cain_videotemp_FfmpegFilterActivity_play(JNIEnv *env, jobject thiz, jst
                 //added by ws for AVfilter end
 
                 // lock native window buffer
-                ANativeWindow_lock(nativeWindow, &windowBuffer, 0);
+                ANativeWindow_lock(nativeWindow, &windowBuffer, nullptr);
 
                 // 格式转换
                 sws_scale(sws_ctx, (uint8_t const *const *) pFrame->data,
@@ -724,7 +720,7 @@ Java_com_cain_videotemp_FfmpegFilterActivity_play(JNIEnv *env, jobject thiz, jst
                           pFrameRGBA->data, pFrameRGBA->linesize);
 
                 // 获取stride
-                uint8_t *dst = (uint8_t *) windowBuffer.bits;
+                auto *dst = (uint8_t *) windowBuffer.bits;
                 int dstStride = windowBuffer.stride * 4;
                 uint8_t *src = (pFrameRGBA->data[0]);
                 int srcStride = pFrameRGBA->linesize[0];
