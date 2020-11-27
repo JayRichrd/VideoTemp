@@ -64,6 +64,7 @@ add_library( # Sets the name of the library.
         opengl/GlShaders.cpp
         opengl/MyLooper.cpp
         opengl/Looper.cpp
+        ffmpeg/video/ffpmeg_filter_manager.cpp
         ${DIR_SRCS}
         )
 
