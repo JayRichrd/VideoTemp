@@ -25,9 +25,9 @@ extern "C"
 
 /**
  * 初始化filter
- * @param filter_descr filter描述文本
+ * @param filter_des filter描述文本
  * @return
  */
-int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx);
+int init_filters(const char *filter_des, const AVCodecContext *p_codec_ctx);
 
 #endif //VIDEOTEMP_FFPMEG_FILTER_MANAGER_H

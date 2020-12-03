@@ -10,24 +10,26 @@ AVFilterContext *buffersrc_ctx;
 AVFilterContext *buffersink_ctx;
 AVFilterGraph *filter_graph;
 
-int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx) {
+int init_filters(const char *filter_des, const AVCodecContext *p_codec_ctx) {
     char args[512];
     int ret;
+    AVBufferSinkParams *buffersink_params;
     /**
      * 滤镜输入缓冲区
      * 解码器解码后的数据都会放到buffer中
-     * 是一个特殊的filter
+     * 这是一个特殊的filter
      */
-    const AVFilter *buffersrc = avfilter_get_by_name("buffer");
-
+    const AVFilter *buffer_filter = avfilter_get_by_name("buffer");
     /**
      * 滤镜输出缓冲区
      * 滤镜处理完后输出的数据都会放在buffersink中
      * 是一个特殊的filter
      */
     const AVFilter *buffersink = avfilter_get_by_name("buffersink");
+
     AVFilterInOut *outputs = avfilter_inout_alloc();
     AVFilterInOut *inputs = avfilter_inout_alloc();
+
     enum AVPixelFormat pix_fmts[] = {AV_PIX_FMT_YUV420P, AV_PIX_FMT_GRAY8, AV_PIX_FMT_NONE};
 
     /**
@@ -35,8 +37,10 @@ int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx) {
      * 会包含本次使用到的所有过滤器
      */
     filter_graph = avfilter_graph_alloc();
+
     if (!outputs || !inputs || !filter_graph) {
         ret = AVERROR(ENOMEM);
+        LOGE("cannot get filter!")
         goto end;
     }
 
@@ -45,15 +49,17 @@ int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx) {
      */
     snprintf(args, sizeof(args),
              "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
-             pAvCodecCtx->width, pAvCodecCtx->height, pAvCodecCtx->pix_fmt,
-             pAvCodecCtx->time_base.num, pAvCodecCtx->time_base.den,
-             pAvCodecCtx->sample_aspect_ratio.num, pAvCodecCtx->sample_aspect_ratio.den);
+             p_codec_ctx->width, p_codec_ctx->height,
+             p_codec_ctx->pix_fmt,
+             p_codec_ctx->time_base.num, p_codec_ctx->time_base.den,
+             p_codec_ctx->sample_aspect_ratio.num, p_codec_ctx->sample_aspect_ratio.den);
 
     /**
      * 创建过滤器实例,并将其添加到现有graph中
      */
-    if ((ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in", args, nullptr, filter_graph)) < 0) {
-        av_log(nullptr, AV_LOG_ERROR, "Cannot create buffer source\n");
+    if ((ret = avfilter_graph_create_filter(&buffersrc_ctx, buffer_filter, "in", args, nullptr, filter_graph)) < 0) {
+        av_log(nullptr, AV_LOG_ERROR, "cannot create buffer source\n");
+        LOGE("cannot create buffer source!")
         goto end;
     }
 
@@ -61,16 +67,13 @@ int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx) {
      * 缓冲视频接收器,终止过滤器链
      */
     /* buffer video sink: to terminate the filter chain. */
-    AVBufferSinkParams *buffersink_params;
     buffersink_params = av_buffersink_params_alloc();
     buffersink_params->pixel_fmts = pix_fmts;
-    ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out", nullptr, buffersink_params, filter_graph);
-    av_free(buffersink_params);
-    if (ret < 0) {
-        av_log(nullptr, AV_LOG_ERROR, "Cannot create buffer sink\n");
+    if ((ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out", nullptr, buffersink_params, filter_graph)) < 0) {
+        av_log(nullptr, AV_LOG_ERROR, "cannot create buffer sink\n");
+        LOGE("cannot create buffer sink!")
         goto end;
     }
-
 
     /*
      * Set the endpoints for the filter graph. The filter_graph will
@@ -100,15 +103,26 @@ int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx) {
     /**
      * 将由字符串描述的图形添加到图形中
      */
-    if ((ret = avfilter_graph_parse_ptr(filter_graph, filter_descr, &inputs, &outputs, nullptr)) < 0)
+    if ((ret = avfilter_graph_parse_ptr(filter_graph, filter_des, &inputs, &outputs, nullptr)) < 0) {
+        LOGE("cannot parse ptr!")
         goto end;
+    }
 
-    if ((ret = avfilter_graph_config(filter_graph, nullptr)) < 0)
+    if ((ret = avfilter_graph_config(filter_graph, nullptr)) < 0) {
+        LOGE("cannot config graph!")
         goto end;
+    }
 
     end:
-    avfilter_inout_free(&inputs);
-    avfilter_inout_free(&outputs);
+    if (inputs) {
+        avfilter_inout_free(&inputs);
+    }
+    if (outputs) {
+        avfilter_inout_free(&outputs);
+    }
+    if (buffersink_params) {
+        av_free(buffersink_params);
+    }
 
     return ret;
 }
@@ -118,6 +132,7 @@ extern "C"
 JNIEXPORT jint JNICALL
 Java_com_cain_videotemp_ffmpeg_FfmpegFilter_play(JNIEnv *env, jobject thiz, jstring input_file, jstring filter_desc_str, jobject surface) {
     LOGI("native filter play.")
+
     int rel = 0;
     AVFormatContext *p_format_ctx = nullptr;
     // 输入文件
@@ -126,16 +141,21 @@ Java_com_cain_videotemp_ffmpeg_FfmpegFilter_play(JNIEnv *env, jobject thiz, jstr
     const char *filter_desc = nullptr;
     // 视频流索引
     int video_stream_index = -1;
+    // 解码器上下文
     AVCodecContext *p_codec_ctx = nullptr;
+    // 视频解码器
     AVCodec *p_codec;
+
     ANativeWindow *native_window;
     ANativeWindow_Buffer window_buffer;
+
     AVFrame *p_frame = nullptr;
     AVFrame *p_frame_RGBA = nullptr;
+
     AVPacket packet;
     struct SwsContext *sws_ctx;
     uint8_t *buffer = nullptr;
-    int numBytes;
+    int bytes_num;
     // 视频宽高
     int video_height;
     int video_width;
@@ -217,60 +237,75 @@ Java_com_cain_videotemp_ffmpeg_FfmpegFilter_play(JNIEnv *env, jobject thiz, jstr
     // 获取视频宽高
     video_width = p_codec_ctx->width;
     video_height = p_codec_ctx->height;
+    LOGD("video width = %d, video height = %d", video_width, video_height)
 
     // 设置native window的buffer大小,可自动拉伸
     ANativeWindow_setBuffersGeometry(native_window, video_width, video_height, WINDOW_FORMAT_RGBA_8888);
+    // todo 为何要再次打开解码器呢？
     if (avcodec_open2(p_codec_ctx, p_codec, nullptr) < 0) {
-        LOGD("Could not open codec.")
-        return -1; // Could not open codec
+        LOGE("couldn't open codec.")
+        rel = -1;
+        goto end;
     }
-    // Allocate video frame
+
+    // 分配视频帧结构体
+    // 只是分配AVFrame结构体，data指向的内存并没有分配，需要单独指定
     p_frame = av_frame_alloc();
-    // 用于渲染
     p_frame_RGBA = av_frame_alloc();
     if (p_frame_RGBA == nullptr || p_frame == nullptr) {
-        LOGD("Could not allocate video frame.")
-        return -1;
+        LOGE("couldn't allocate video frame.")
+        rel = -1;
+        goto end;
     }
+
     // Determine required buffer size and allocate buffer
     // buffer中数据就是用于渲染的,且格式为RGBA
-    numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGBA, p_codec_ctx->width, p_codec_ctx->height, 1);
-    buffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
-    av_image_fill_arrays(p_frame_RGBA->data, p_frame_RGBA->linesize, buffer, AV_PIX_FMT_RGBA, p_codec_ctx->width, p_codec_ctx->height, 1);
+    // 通过指定像素格式、图像宽、图像高来计算所需的内存大小
+    bytes_num = av_image_get_buffer_size(AV_PIX_FMT_RGBA, video_width, video_height, 1);
+    buffer = (uint8_t *) av_malloc(bytes_num * sizeof(uint8_t));
+    av_image_fill_arrays(p_frame_RGBA->data, p_frame_RGBA->linesize, buffer, AV_PIX_FMT_RGBA, video_width, video_height, 1);
+
     // 由于解码出来的帧格式不是RGBA的,在渲染之前需要进行格式转换
-    sws_ctx = sws_getContext(p_codec_ctx->width, p_codec_ctx->height, p_codec_ctx->pix_fmt,
-                             p_codec_ctx->width, p_codec_ctx->height, AV_PIX_FMT_RGBA,
+    sws_ctx = sws_getContext(video_width, video_height, p_codec_ctx->pix_fmt,
+                             video_width, video_height, AV_PIX_FMT_RGBA,
                              SWS_BILINEAR, nullptr, nullptr, nullptr);
-    int frameFinished;
+
+    // 解帧
+    int is_decode_frame_finished;
     while (av_read_frame(p_format_ctx, &packet) >= 0) {
         // Is this a packet from the video stream?
         if (packet.stream_index == video_stream_index) {
-
             // Decode video frame
-            avcodec_decode_video2(p_codec_ctx, p_frame, &frameFinished, &packet);
-
+            // 解码一帧视频数据
+            avcodec_decode_video2(p_codec_ctx, p_frame, &is_decode_frame_finished, &packet);
             // 并不是decode一次就可解码出一帧
-            if (frameFinished) {
+            if (is_decode_frame_finished) {
 
-                //added by ws for AVfilter start
+                //added by ws for AVfilter start=====================
+                // 获取PTS
                 p_frame->pts = av_frame_get_best_effort_timestamp(p_frame);
 
-                //* push the decoded frame into the filtergraph
+                // push the decoded frame into the filtergraph
+                // 向FilterGraph中加入一个AVFrame
                 if (av_buffersrc_add_frame(buffersrc_ctx, p_frame) < 0) {
-                    LOGD("Could not av_buffersrc_add_frame")
+                    LOGE("couldn't av_buffersrc_add_frame")
+                    rel = -1;
                     break;
                 }
 
+                //从sink filter中获取一个AVFrame
                 if (av_buffersink_get_frame(buffersink_ctx, p_frame) < 0) {
-                    LOGD("Could not av_buffersink_get_frame")
+                    LOGE("couldn't av_buffersink_get_frame")
+                    rel = -1;
                     break;
                 }
-                //added by ws for AVfilter end
+                //added by ws for AVfilter end=====================
 
                 // lock native window buffer
                 ANativeWindow_lock(native_window, &window_buffer, nullptr);
 
                 // 格式转换
+                // 用于转换像素
                 sws_scale(sws_ctx, (uint8_t const *const *) p_frame->data,
                           p_frame->linesize, 0, p_codec_ctx->height,
                           p_frame_RGBA->data, p_frame_RGBA->linesize);
@@ -282,8 +317,7 @@ Java_com_cain_videotemp_ffmpeg_FfmpegFilter_play(JNIEnv *env, jobject thiz, jstr
                 int srcStride = p_frame_RGBA->linesize[0];
 
                 // 由于window的stride和帧的stride不同,因此需要逐行复制
-                int h;
-                for (h = 0; h < video_height; h++) {
+                for (int h = 0; h < video_height; h++) {
                     memcpy(dst + h * dstStride, src + h * srcStride, srcStride);
                 }
 
@@ -305,22 +339,18 @@ Java_com_cain_videotemp_ffmpeg_FfmpegFilter_play(JNIEnv *env, jobject thiz, jstr
         av_free(buffer);
     }
     if (p_frame_RGBA) {
-        av_free(p_frame_RGBA);
+        av_frame_free(&p_frame_RGBA);
     }
     if (p_frame) {
-        // Free the YUV frame
-        av_free(p_frame);
+        av_frame_free(&p_frame);
     }
     if (filter_graph) {
-        avfilter_graph_free(&filter_graph); //added by ws for avfilter
+        avfilter_graph_free(&filter_graph);
     }
-    // Close the codecs
     if (p_codec_ctx) {
         avcodec_close(p_codec_ctx);
     }
-    // Close the video file
     if (p_format_ctx) {
-        LOGD("close file.")
         avformat_close_input(&p_format_ctx);
     }
     return rel;

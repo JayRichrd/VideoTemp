@@ -58,10 +58,10 @@ ANativeWindow *mWindow = nullptr;
 
 /**
  * 初始化filter
- * @param filter_descr filter描述文本
+ * @param filter_des filter描述文本
  * @return
  */
-int init_filters(const char *filter_descr, const AVCodecContext *pAvCodecCtx);
+int init_filters(const char *filter_des, const AVCodecContext *p_codec_ctx);
 
 int callBack(sox_bool all_done, void *client_data) {
     LOGE("callback  : %d ", all_done)
