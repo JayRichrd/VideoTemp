@@ -13,7 +13,6 @@ AVFilterGraph *filter_graph;
 int init_filters(const char *filter_des, const AVCodecContext *p_codec_ctx) {
     char args[512];
     int ret;
-    AVBufferSinkParams *buffersink_params;
     /**
      * 滤镜输入缓冲区
      * 解码器解码后的数据都会放到buffer中
@@ -25,10 +24,11 @@ int init_filters(const char *filter_des, const AVCodecContext *p_codec_ctx) {
      * 滤镜处理完后输出的数据都会放在buffersink中
      * 是一个特殊的filter
      */
-    const AVFilter *buffersink = avfilter_get_by_name("buffersink");
+    const AVFilter *buffersink_filter = avfilter_get_by_name("buffersink");
 
     AVFilterInOut *outputs = avfilter_inout_alloc();
     AVFilterInOut *inputs = avfilter_inout_alloc();
+    AVBufferSinkParams *buffersink_params = av_buffersink_params_alloc();
 
     enum AVPixelFormat pix_fmts[] = {AV_PIX_FMT_YUV420P, AV_PIX_FMT_GRAY8, AV_PIX_FMT_NONE};
 
@@ -38,9 +38,9 @@ int init_filters(const char *filter_des, const AVCodecContext *p_codec_ctx) {
      */
     filter_graph = avfilter_graph_alloc();
 
-    if (!outputs || !inputs || !filter_graph) {
+    if (!filter_graph) {
         ret = AVERROR(ENOMEM);
-        LOGE("cannot get filter!")
+        LOGE("cannot create filter graph!")
         goto end;
     }
 
@@ -67,9 +67,8 @@ int init_filters(const char *filter_des, const AVCodecContext *p_codec_ctx) {
      * 缓冲视频接收器,终止过滤器链
      */
     /* buffer video sink: to terminate the filter chain. */
-    buffersink_params = av_buffersink_params_alloc();
     buffersink_params->pixel_fmts = pix_fmts;
-    if ((ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out", nullptr, buffersink_params, filter_graph)) < 0) {
+    if ((ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink_filter, "out", nullptr, buffersink_params, filter_graph)) < 0) {
         av_log(nullptr, AV_LOG_ERROR, "cannot create buffer sink\n");
         LOGE("cannot create buffer sink!")
         goto end;
